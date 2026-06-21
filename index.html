@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DentalShade — 色調補正ツール</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0F0E0C; --surf:#1A1916; --surf2:#232119;
+  --bdr:rgba(255,255,255,0.08); --bdr2:rgba(255,255,255,0.16);
+  --fg:#F0EBE3; --fgm:rgba(240,235,227,0.50); --fgd:rgba(240,235,227,0.22);
+  /* ② 薄い青 */
+  --ac:#5B9BD5; --aclt:#82BAE8; --acdim:rgba(91,155,213,0.15); --acbdr:rgba(91,155,213,0.35);
+  --green:#5A9E72; --red:#C05050;
+}
+body{background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+/* topbar */
+#topbar{display:flex;align-items:center;height:44px;padding:0 16px;border-bottom:1px solid var(--bdr);background:var(--bg);flex-shrink:0}
+#logo{font-family:monospace;font-size:13px;letter-spacing:.12em;margin-right:20px;flex-shrink:0}
+#logo span{color:var(--ac)}
+.tab{height:44px;display:flex;align-items:center;padding:0 14px;font-size:12px;color:var(--fgm);cursor:pointer;border:none;border-bottom:2px solid transparent;background:none;white-space:nowrap;transition:color .15s,border-color .15s}
+.tab:hover{color:var(--fg)}.tab.active{color:var(--ac);border-bottom-color:var(--ac)}
+/* pages */
+.page{display:none;flex:1;overflow:hidden;flex-direction:column}.page.on{display:flex}
+/* layouts */
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:0;flex:1;overflow:hidden}
+.cols3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;flex:1;overflow:hidden}
+.col{background:var(--bg);padding:13px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;border-right:1px solid var(--bdr)}
+.col:last-child{border-right:none}
+/* section heads */
+.sh{display:flex;align-items:flex-start;gap:8px}
+.sn{font-family:monospace;font-size:9px;color:var(--ac);background:var(--acdim);border:1px solid var(--acbdr);border-radius:4px;padding:2px 6px;white-space:nowrap;margin-top:1px;flex-shrink:0}
+.st{font-size:13px;font-weight:600}.ss{font-size:10px;color:var(--fgm);margin-top:2px;line-height:1.5}
+/* upload */
+.uz{border:1.5px dashed var(--bdr2);border-radius:7px;min-height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;background:var(--surf);position:relative;overflow:hidden;transition:border-color .15s;flex-shrink:0}
+.uz:hover{border-color:var(--ac)}.uz.has{border-style:solid;border-color:var(--bdr2);cursor:default}
+.uz input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}.uz.has input{display:none}
+.uh{font-size:10px;color:var(--fgm);text-align:center;line-height:1.6;pointer-events:none}
+/* ① canvas: display canvas separate from data canvas */
+.cw{position:relative;background:#080706;border-radius:6px;overflow:hidden;line-height:0;flex-shrink:0;border:1px solid var(--bdr)}
+.cw canvas{display:block;width:100%;height:auto;cursor:crosshair}
+.chint{font-size:10px;color:var(--fgm);font-family:monospace;text-align:center;padding:2px 0}
+/* box */
+.bx{background:var(--surf);border:1px solid var(--bdr);border-radius:7px;overflow:hidden;flex-shrink:0}
+.bh{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-bottom:1px solid var(--bdr)}
+.bt{font-family:monospace;font-size:10px;color:var(--fgm);text-transform:uppercase;letter-spacing:.09em}
+.bb{padding:10px;display:flex;flex-direction:column;gap:7px}
+/* sliders */
+.sr{display:flex;align-items:center;gap:4px}
+.sl{font-size:10px;color:var(--fgm);width:64px;flex-shrink:0}
+.sr input[type=range]{flex:1;accent-color:var(--ac);cursor:pointer;min-width:0}
+.sv{font-family:monospace;font-size:10px;color:var(--fgm);width:32px;text-align:right;flex-shrink:0}
+.pm{width:20px;height:20px;border-radius:3px;flex-shrink:0;background:rgba(255,255,255,0.06);border:1px solid var(--bdr2);color:var(--fgm);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;transition:background .12s,color .12s}
+.pm:hover{background:var(--acdim);color:var(--ac);border-color:var(--acbdr)}
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;border:none;border-radius:5px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;transition:background .14s;white-space:nowrap}
+.btn-w{width:100%}
+.btn-g{background:var(--ac);color:#fff}.btn-g:hover:not(:disabled){background:var(--aclt)}
+.btn-g:disabled{background:rgba(91,155,213,0.2);color:rgba(240,235,227,0.25);cursor:not-allowed}
+.btn-o{background:transparent;border:1px solid var(--bdr2);color:var(--fgm)}.btn-o:hover:not(:disabled){border-color:var(--ac);color:var(--fg)}
+.btn-o:disabled{opacity:.3;cursor:not-allowed}.brow{display:flex;gap:5px;flex-wrap:wrap}
+/* ③ compare strip: margin-left:-2px to overlap seam */
+.cstrip{display:flex;background:#080706;border:1px solid var(--bdr);border-radius:7px;overflow:hidden;flex-shrink:0}
+.cc{flex:1;display:flex;flex-direction:column;min-width:0}
+.cc+.cc{margin-left:-2px}
+.cc canvas{width:100%;display:block;background:#080706}
+.clb{font-family:monospace;font-size:9px;color:var(--fgd);text-transform:uppercase;letter-spacing:.08em;text-align:center;padding:4px 3px 3px;background:var(--surf);border-bottom:1px solid var(--bdr);position:relative;z-index:1}
+/* delta */
+.db{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surf);border:1px solid var(--bdr);border-radius:6px;flex-shrink:0}
+.dl{font-size:10px;color:var(--fgm);flex:1}.dv{font-family:monospace;font-size:12px;font-weight:600}
+.dg{color:var(--green)}.dw{color:var(--ac)}.dr{color:var(--red)}
+.ml{font-family:monospace;font-size:9px;color:rgba(240,235,227,0.27);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px}
+.hidden{display:none!important}
+.pfoot{display:flex;align-items:center;justify-content:space-between;padding:6px 14px;border-top:1px solid var(--bdr);background:var(--bg);flex-shrink:0;gap:8px}
+.pfi{font-size:10px;color:var(--fgd);font-family:monospace}
+/* paste canvas */
+#pasteWrap{flex-shrink:0;line-height:0}
+#pasteWrap canvas{display:block;width:100%;height:auto;cursor:default}
+/* ④ picker page */
+#page4{background:var(--bg)}
+#page4 .cols2{overflow:hidden}
+.pick-full-wrap{position:relative;flex:1;line-height:0;background:#080706;overflow:hidden;cursor:crosshair;min-height:0}
+.pick-full-wrap canvas{display:block;width:100%;height:auto}
+/* ④ crosshair overlay */
+#pickCross{position:absolute;inset:0;pointer-events:none}
+#pickCross .ch{position:absolute;background:rgba(91,155,213,0.55)}
+#pickCross .cv2{position:absolute;background:rgba(91,155,213,0.55)}
+#pickDot{position:absolute;width:16px;height:16px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 1.5px var(--ac),0 0 8px rgba(0,0,0,0.7);transform:translate(-50%,-50%);pointer-events:none;display:none;background:transparent}
+/* ④ results panel */
+.pick-panel{padding:13px;display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+.pick-hint-big{font-size:11px;color:var(--fgm);text-align:center;line-height:1.7;padding:8px;background:var(--surf);border-radius:6px;border:1px solid var(--bdr)}
+.pick-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.pick-cell{background:var(--surf);border:1px solid var(--bdr);border-radius:7px;overflow:hidden}
+.pick-cell-header{display:flex;align-items:center;gap:6px;padding:7px 9px;border-bottom:1px solid var(--bdr)}
+.pick-badge{font-family:monospace;font-size:10px;color:var(--fgd);width:16px;text-align:center}
+.pick-swatch{width:28px;height:28px;border-radius:4px;border:1px solid rgba(255,255,255,0.12);flex-shrink:0}
+.pick-meta{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.pick-hex-txt{font-family:monospace;font-size:11px;color:var(--fg)}
+.pick-lab-txt{font-family:monospace;font-size:10px;color:var(--fgm)}
+.pick-cell.empty .pick-swatch{background:#2a2825}
+.pick-cell.empty .pick-hex-txt,.pick-cell.empty .pick-lab-txt{color:var(--fgd)}
+/* magnifier */
+#pickMag{position:absolute;width:80px;height:80px;border-radius:50%;border:2px solid var(--ac);box-shadow:0 2px 12px rgba(0,0,0,0.6);pointer-events:none;display:none;overflow:hidden;background:#000}
+#pickMag canvas{position:absolute;top:0;left:0}
+
+/* ── ケースタブバー ── */
+#caseBar {
+  display:flex; align-items:center; gap:0;
+  padding:0 8px 0 12px;
+  background:#0D0C0A;
+  border-bottom:1px solid var(--bdr);
+  height:34px; flex-shrink:0;
+  overflow-x:auto; overflow-y:hidden;
+  scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.1) transparent;
+}
+#caseBar::-webkit-scrollbar{height:3px}
+#caseBar::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:2px}
+.case-tab {
+  display:flex; align-items:center; gap:5px;
+  height:34px; padding:0 10px 0 12px;
+  font-size:11px; color:var(--fgm);
+  cursor:pointer; white-space:nowrap;
+  border-right:1px solid var(--bdr);
+  background:transparent; border-top:none; border-bottom:none; border-left:none;
+  transition:color .15s, background .15s;
+  flex-shrink:0;
+}
+.case-tab:hover { color:var(--fg); background:rgba(255,255,255,0.04); }
+.case-tab.active { color:var(--ac); background:rgba(91,155,213,0.08); }
+.case-tab .ct-name {
+  max-width:90px; overflow:hidden; text-overflow:ellipsis;
+  outline:none; background:transparent; border:none; color:inherit;
+  font-size:11px; font-family:inherit; cursor:pointer;
+  white-space:nowrap;
+}
+.case-tab.active .ct-name { cursor:text; }
+.case-tab .ct-close {
+  width:16px; height:16px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:transparent; border:none; color:var(--fgd);
+  cursor:pointer; font-size:13px; line-height:1;
+  transition:background .12s, color .12s;
+  flex-shrink:0; padding:0;
+}
+.case-tab .ct-close:hover { background:rgba(192,80,80,0.3); color:#e08080; }
+#btnNewCase {
+  display:flex; align-items:center; gap:4px;
+  height:26px; padding:0 10px; margin-left:4px;
+  background:var(--acdim); border:1px solid var(--acbdr);
+  border-radius:4px; color:var(--ac);
+  font-size:11px; font-weight:600; cursor:pointer;
+  white-space:nowrap; flex-shrink:0; transition:background .14s;
+}
+#btnNewCase:hover { background:rgba(91,155,213,0.28); }
+#btnUndoCase {
+  display:flex; align-items:center; gap:4px;
+  height:26px; padding:0 9px; margin-left:4px;
+  background:transparent; border:1px solid var(--bdr2);
+  border-radius:4px; color:var(--fgm);
+  font-size:11px; cursor:pointer; white-space:nowrap; flex-shrink:0;
+  transition:background .14s, color .14s;
+}
+#btnUndoCase:hover { border-color:var(--ac); color:var(--fg); }
+#btnUndoCase:disabled { opacity:.28; cursor:not-allowed; }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div id="logo">Dental<span>Shade</span></div>
+  <button class="tab active" id="tab1" onclick="goPage(1)">① クリニック写真</button>
+  <button class="tab"        id="tab2" onclick="goPage(2)">② 比較・補正</button>
+  <button class="tab"        id="tab3" onclick="goPage(3)">③ 切り取り・貼り付け</button>
+  <button class="tab"        id="tab4" onclick="goPage(4)">④ カラーピッカー</button>
+</div>
+
+<!-- ─── ケースタブバー ─── -->
+<div id="caseBar">
+  <button id="btnNewCase" onclick="newCase()">＋ New Case</button>
+  <button id="btnUndoCase" onclick="undoDeleteCase()" disabled title="削除したケースを元に戻す">↩ 戻す</button>
+  <!-- タブはJSで動的生成 -->
+</div>
+
+<!-- ═══ PAGE 1 ═══ -->
+<div class="page on" id="page1">
+  <div class="cols2">
+    <div class="col">
+      <div class="sh"><div class="sn">STEP 01</div><div><div class="st">クリニック写真をアップロード</div><div class="ss">シェードガイドをあてがった口腔内写真</div></div></div>
+      <div class="uz" id="uz1">
+        <input type="file" id="f1" accept="image/*">
+        <svg id="uico1" width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="1" y="1" width="26" height="26" rx="5" stroke="rgba(240,235,227,0.2)" stroke-width="1.3"/><path d="M14 7v14M7 14l7-7 7 7" stroke="rgba(240,235,227,0.25)" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <div class="uh" id="uhi1">クリニック写真をアップロード<br><small style="font-size:9px;opacity:.55">JPG / PNG / WEBP</small></div>
+      </div>
+      <div class="bx"><div class="bh"><span class="bt">手動調整①</span></div><div class="bb" id="adj1box"></div></div>
+    </div>
+    <div class="col">
+      <div class="sh"><div class="sn">STEP 02</div><div><div class="st">プレビュー・領域選択②</div><div class="ss">ドラッグで比較したい領域を選択</div></div></div>
+      <div class="cw" id="cw1"><canvas id="cv1"></canvas></div>
+      <div class="chint" id="ch1">← 写真をアップロードすると表示されます</div>
+      <div class="brow">
+        <button class="btn btn-o" id="bcrop1" disabled onclick="confirmCrop(1)">選択領域を確定②</button>
+        <button class="btn btn-o" id="bclr1"  disabled onclick="clearCrop(1)">解除</button>
+      </div>
+      <div class="hidden" id="cprev1"><div class="ml">確定した選択領域②</div><div class="cw"><canvas id="cpv1"></canvas></div></div>
+    </div>
+  </div>
+  <div class="pfoot"><span class="pfi">①写真を調整し、領域②を選択したら次へ</span><button class="btn btn-g" onclick="goPage(2)">次へ →</button></div>
+</div>
+
+<!-- ═══ PAGE 2 ═══ -->
+<div class="page" id="page2">
+  <div class="cols3">
+    <div class="col">
+      <div class="sh"><div class="sn">STEP 03</div><div><div class="st">手元シェードガイド写真</div><div class="ss">同種ガイドを手元で撮影した写真</div></div></div>
+      <div class="uz" id="uz2">
+        <input type="file" id="f2" accept="image/*">
+        <svg id="uico2" width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="1" y="1" width="26" height="26" rx="5" stroke="rgba(240,235,227,0.2)" stroke-width="1.3"/><path d="M14 7v14M7 14l7-7 7 7" stroke="rgba(240,235,227,0.25)" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <div class="uh" id="uhi2">手元写真をアップロード<br><small style="font-size:9px;opacity:.55">JPG / PNG / WEBP</small></div>
+      </div>
+      <div class="cw" id="cw2"><canvas id="cv2"></canvas></div>
+      <div class="chint" id="ch2">← 写真をアップロードすると表示されます</div>
+      <div class="brow">
+        <button class="btn btn-o" id="bcrop2" disabled onclick="confirmCrop(2)">選択領域を確定③</button>
+        <button class="btn btn-o" id="bclr2"  disabled onclick="clearCrop(2)">解除</button>
+      </div>
+      <div class="hidden" id="cprev2"><div class="ml">確定した選択領域③</div><div class="cw"><canvas id="cpv2"></canvas></div></div>
+      <button class="btn btn-o btn-w" id="btnNewPhoto2" onclick="loadNewTechPhoto()" style="margin-top:2px">📷 別の手元写真に切り替える</button>
+    </div>
+    <div class="col">
+      <div class="sh"><div class="sn">比較</div><div><div class="st">②③ 横並び比較</div><div class="ss">境界線なしで密着比較</div></div></div>
+      <div class="cstrip">
+        <div class="cc"><div class="clb">②クリニック</div><canvas id="cmpL"></canvas></div>
+        <div class="cc"><div class="clb">③手元（補正後）</div><canvas id="cmpR"></canvas></div>
+      </div>
+      <div class="db"><span class="dl">選択領域間 ΔE</span><span class="dv" id="deltaDE">—</span></div>
+      <div class="bx"><div class="bh"><span class="bt">色補正 — 手元写真に適用</span></div><div class="bb" id="corrbox"></div></div>
+    </div>
+    <div class="col">
+      <div class="sh"><div class="sn">結果</div><div><div class="st">補正後プレビュー</div></div></div>
+      <div class="cstrip">
+        <div class="cc"><div class="clb">補正前</div><canvas id="prevBefore"></canvas></div>
+        <div class="cc"><div class="clb">補正後</div><canvas id="prevAfter"></canvas></div>
+      </div>
+      <div class="db"><span class="dl">補正 ΔE</span><span class="dv" id="deltaCorr">—</span></div>
+      <div class="ml">補正後フル画像</div>
+      <div class="cw" id="cwCorr"><canvas id="cvCorr"></canvas></div>
+      <button class="btn btn-o btn-w" id="btnDlCorr" disabled onclick="dlCanvas('cvCorr','corrected')">補正画像をダウンロード</button>
+    </div>
+  </div>
+  <div class="pfoot"><button class="btn btn-o" onclick="goPage(1)">← 戻る</button><span class="pfi">別の手元写真で何度でも繰り返せます</span><button class="btn btn-g" onclick="goPage(3)">次へ →</button></div>
+</div>
+
+<!-- ═══ PAGE 3 ═══ -->
+<div class="page" id="page3">
+  <div class="cols2">
+    <div class="col">
+      <div class="sh"><div class="sn">STEP 05</div><div><div class="st">補正後画像から切り取る⑤</div><div class="ss">ドラッグして領域を選択</div></div></div>
+      <div class="cw" id="cwCut"><canvas id="cvCut"></canvas></div>
+      <div class="chint" id="chCut">← ページ②で補正を完了させると表示されます</div>
+      <div class="brow">
+        <button class="btn btn-o" id="bCutOk"  disabled onclick="confirmCut()">この領域を切り取る⑤</button>
+        <button class="btn btn-o" id="bCutClr" disabled onclick="clearCut()">解除</button>
+      </div>
+      <div class="hidden" id="cutPrev"><div class="ml">切り取り領域⑤</div><div class="cw"><canvas id="cvCutPrev"></canvas></div></div>
+    </div>
+    <div class="col">
+      <div class="sh"><div class="sn">STEP 06</div><div><div class="st">クリニック写真⑥に貼り付ける</div><div class="ss">枠ドラッグ=移動 / 角=拡縮 / ●=回転</div></div></div>
+      <div class="bx"><div class="bh"><span class="bt">貼り付け操作</span></div><div class="bb" style="gap:6px">
+        <div class="brow">
+          <button class="btn btn-o" id="btnAdd" disabled onclick="addPaste()">📌 貼り付ける</button>
+          <button class="btn btn-o" id="btnDel" disabled onclick="delSelected()">🗑 削除</button>
+          <button class="btn btn-o" onclick="undoPaste()">↩ 戻す</button>
+          <button class="btn btn-o" onclick="resetPaste()">リセット</button>
+        </div>
+        <div class="sr"><span class="sl">不透明度</span><input type="range" id="pOp" min="0" max="100" value="100"><span class="sv" id="vpOp">100%</span></div>
+      </div></div>
+      <div id="pasteWrap"><canvas id="cvPaste"></canvas></div>
+      <div class="chint" id="chPaste">← 切り取り後に「貼り付ける」を押してください</div>
+      <button class="btn btn-g btn-w" id="btnDlFinal" disabled onclick="dlCanvas('cvPaste','final')">完成画像をダウンロード</button>
+    </div>
+  </div>
+  <div class="pfoot"><button class="btn btn-o" onclick="goPage(2)">← 戻る</button><span class="pfi">⑥クリニック写真に補正済み領域を貼り付けて完成</span><button class="btn btn-g" onclick="goPage(4)">④ カラーピッカーへ →</button></div>
+</div>
+
+<!-- ═══ PAGE 4: カラーピッカー ═══ -->
+<div class="page" id="page4">
+  <div class="cols2">
+    <!-- LEFT: large image with picker -->
+    <div class="col" style="padding:0;position:relative;overflow:hidden">
+      <div class="pick-full-wrap" id="pickWrap">
+        <canvas id="cvPickSrc"></canvas>
+        <div id="pickCross"><div class="ch" id="pickCH" style="height:1px;width:100%;top:0;left:0"></div><div class="cv2" id="pickCV" style="width:1px;height:100%;left:0;top:0"></div></div>
+        <div id="pickDot"></div>
+        <div id="pickMag"><canvas id="cvMag"></canvas></div>
+      </div>
+      <div style="padding:8px 12px;border-top:1px solid var(--bdr);flex-shrink:0;display:flex;gap:8px;align-items:center;background:var(--bg)">
+        <span style="font-size:10px;color:var(--fgm);font-family:monospace" id="pickHintBar">画像をクリックして色を取得（最大6点）</span>
+        <button class="btn btn-o" style="margin-left:auto" onclick="pickSwitchSrc()">📷 画像切替</button>
+      </div>
+    </div>
+    <!-- RIGHT: results -->
+    <div class="pick-panel">
+      <div class="sh"><div class="sn">PICK</div><div><div class="st">カラーピッカー — 6点取得</div><div class="ss">1〜3点目は左列、4〜6点目は右列に表示</div></div></div>
+      <div class="pick-hint-big" id="pickStatus">画像をクリックして色を取得してください</div>
+      <div class="pick-grid" id="pickGrid"></div>
+      <div class="brow">
+        <button class="btn btn-o" onclick="resetPicker()">🔄 リセット</button>
+        <button class="btn btn-o btn-w" id="btnDlPick" disabled onclick="dlPickResults()">結果をダウンロード</button>
+      </div>
+    </div>
+  </div>
+  <div class="pfoot"><button class="btn btn-o" onclick="goPage(3)">← 戻る</button><span class="pfi">④ 完成画像または任意の画像の色をピンポイントで取得します</span><button class="btn btn-g" onclick="startNextRound()">🔄 別の手元写真で再補正 →</button></div>
+</div>
+
+<canvas id="wc" style="display:none"></canvas>
+
+<script>
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+var S={
+  img1:null, img2:null,
+  /* ① offscreen ImageData caches — updated only when image/sliders change */
+  cache1:null,  /* adjusted clinic */
+  cache2raw:null, cache2adj:null, /* raw tech, adjusted tech */
+  adj1:{L:0,K:0,S:0,T:0,G:0},
+  adjC:{L:0,K:0,S:0,T:0,G:0},
+  crop1:null, crop2:null, crop1Data:null, crop2Data:null,
+  corrData:null, cutRect:null, cutData:null,
+  pasteList:[], selIdx:-1,
+  drag:{on:false,sx:0,sy:0,ex:0,ey:0,who:''}
+};
+
+/* sliders */
+var SLD=[
+  {k:'L',lbl:'明度',      min:-100,max:100},{k:'K',lbl:'コントラスト',min:-100,max:100},
+  {k:'S',lbl:'彩度',      min:-100,max:100},{k:'T',lbl:'色温度',    min:-80, max:80},
+  {k:'G',lbl:'グリーン',  min:-50, max:50}
+];
+
+function buildSliders(boxId,pre,adj,cb){
+  var box=$(boxId); box.innerHTML='';
+  SLD.forEach(function(s){
+    var row=document.createElement('div'); row.className='sr';
+    row.innerHTML='<span class="sl">'+s.lbl+'</span>'+
+      '<button class="pm" data-p="'+pre+'" data-k="'+s.k+'" data-d="-1">−</button>'+
+      '<input type="range" id="'+pre+s.k+'" min="'+s.min+'" max="'+s.max+'" value="0">'+
+      '<button class="pm" data-p="'+pre+'" data-k="'+s.k+'" data-d="1">＋</button>'+
+      '<span class="sv" id="v'+pre+s.k+'">0</span>';
+    box.appendChild(row);
+  });
+  SLD.forEach(function(s){
+    $(pre+s.k).addEventListener('input',function(){
+      var v=+this.value; adj[s.k]=v; $('v'+pre+s.k).textContent=(v>0?'+':'')+v; cb();
+    });
+  });
+  box.querySelectorAll('.pm').forEach(function(btn){
+    var t=null;
+    function step(){
+      var k=btn.dataset.k,p=btn.dataset.p,d=+btn.dataset.d;
+      var sl=SLD.find(function(x){return x.k===k;});
+      var nv=Math.max(sl.min,Math.min(sl.max,adj[k]+d));
+      adj[k]=nv; $(p+k).value=nv; $('v'+p+k).textContent=(nv>0?'+':'')+nv; cb();
+    }
+    function stop(){clearInterval(t);}
+    btn.addEventListener('mousedown',function(e){e.preventDefault();step();t=setInterval(step,70);});
+    btn.addEventListener('mouseup',stop); btn.addEventListener('mouseleave',stop);
+    btn.addEventListener('touchstart',function(e){e.preventDefault();step();t=setInterval(step,70);},{passive:false});
+    btn.addEventListener('touchend',stop);
+  });
+  var rb=document.createElement('button'); rb.className='btn btn-o'; rb.textContent='リセット';
+  rb.onclick=function(){SLD.forEach(function(s){adj[s.k]=0;$(pre+s.k).value=0;$('v'+pre+s.k).textContent='0';});cb();};
+  box.appendChild(rb);
+}
+
+/* ═══ UTILS ═══ */
+function $(id){return document.getElementById(id);}
+function show(id){$(id).classList.remove('hidden');}
+function hide(id){$(id).classList.add('hidden');}
+function clamp(v){return Math.max(0,Math.min(255,Math.round(v)));}
+
+function goPage(n){
+  [1,2,3,4].forEach(function(i){$('page'+i).classList.toggle('on',i===n);$('tab'+i).classList.toggle('active',i===n);});
+  if(n===3) syncPage3();
+  if(n===4) syncPickerPage();
+}
+
+/* ═══ ① PIXEL PROCESSING — cache to avoid re-computing on drag ═══ */
+function imgToData(img){
+  var wc=$('wc'); wc.width=img.naturalWidth; wc.height=img.naturalHeight;
+  wc.getContext('2d').drawImage(img,0,0);
+  return wc.getContext('2d').getImageData(0,0,wc.width,wc.height);
+}
+
+function adjustData(src,adj){
+  var d=new Uint8ClampedArray(src.data);
+  var L=adj.L*2, K=adj.K/100, sA=1+adj.S/100, T=adj.T*1.8, G=adj.G*1.4;
+  for(var i=0;i<d.length;i+=4){
+    var r=d[i],g=d[i+1],b=d[i+2];
+    r+=L;g+=L;b+=L;
+    if(K!==0){r=(r-128)*(1+K)+128;g=(g-128)*(1+K)+128;b=(b-128)*(1+K)+128;}
+    var avg=(r+g+b)/3;
+    r=avg+(r-avg)*sA; g=avg+(g-avg)*sA; b=avg+(b-avg)*sA;
+    r+=T; b-=T*0.6; g+=G; r-=G*0.28; b-=G*0.28;
+    d[i]=clamp(r);d[i+1]=clamp(g);d[i+2]=clamp(b);
+  }
+  return new ImageData(d,src.width,src.height);
+}
+
+/* rebuild cache1 when img1 or adj1 changes */
+function rebuildCache1(){
+  if(!S.img1) return;
+  var raw=imgToData(S.img1);
+  S.cache1=adjustData(raw,S.adj1);
+}
+/* rebuild cache2 when img2 or adjC changes */
+function rebuildCache2(){
+  if(!S.img2) return;
+  S.cache2raw=imgToData(S.img2);
+  S.cache2adj=adjustData(S.cache2raw,S.adjC);
+  S.corrData=S.cache2adj;
+}
+
+/* ① draw from cache — NO heavy computation on drag */
+function drawC1(){
+  var cv=$('cv1'); if(!S.cache1) return;
+  cv.width=S.cache1.width; cv.height=S.cache1.height;
+  cv.getContext('2d').putImageData(S.cache1,0,0);
+  drawSel(cv,S.drag.who==='c1'?S.drag:null, S.crop1);
+}
+function drawC2(){
+  var cv=$('cv2'); if(!S.img2) return;
+  cv.width=S.img2.naturalWidth; cv.height=S.img2.naturalHeight;
+  cv.getContext('2d').drawImage(S.img2,0,0);
+  drawSel(cv,S.drag.who==='c2'?S.drag:null, S.crop2);
+}
+function drawCut(){
+  var cv=$('cvCut'); if(!S.corrData) return;
+  cv.width=S.corrData.width; cv.height=S.corrData.height;
+  cv.getContext('2d').putImageData(S.corrData,0,0);
+  drawSel(cv,S.drag.who==='cut'?S.drag:null, S.cutRect);
+}
+
+/* ② 薄い青の選択矩形 */
+function drawSel(cv,drag,fixed){
+  var ctx=cv.getContext('2d');
+  var rx,ry,rw,rh;
+  if(drag&&drag.on){
+    /* カーソル(ex,ey)が常に枠内: sx,syは開始点、ex,eyは現在カーソル位置 */
+    /* 矩形は sx,sy → ex,ey の対角線で定義 — 塗りなし・黒縁取りのみ */
+    rx=Math.min(drag.sx,drag.ex); ry=Math.min(drag.sy,drag.ey);
+    rw=Math.abs(drag.ex-drag.sx); rh=Math.abs(drag.ey-drag.sy);
+  } else if(fixed){
+    rx=fixed.x; ry=fixed.y; rw=fixed.w; rh=fixed.h;
+  } else return;
+  if(rw<1||rh<1) return;
+  ctx.save();
+  /* 白い太めのアウトライン（背景に溶けないよう） */
+  ctx.strokeStyle='rgba(255,255,255,0.85)';
+  ctx.lineWidth=3;
+  ctx.setLineDash([]);
+  ctx.strokeRect(rx,ry,rw,rh);
+  /* 黒の細い破線（縁取りのみ、塗りつぶしなし） */
+  ctx.strokeStyle='#000000';
+  ctx.lineWidth=1.5;
+  ctx.setLineDash([5,4]);
+  ctx.strokeRect(rx,ry,rw,rh);
+  ctx.restore();
+}
+
+/* delta */
+function deltaE(d1,d2){
+  var len=Math.min(d1.data.length,d2.data.length);
+  var step=Math.max(4,Math.floor(len/3000))*4,sR=0,sG=0,sB=0,n=0;
+  for(var i=0;i<len;i+=step){sR+=Math.abs(d1.data[i]-d2.data[i]);sG+=Math.abs(d1.data[i+1]-d2.data[i+1]);sB+=Math.abs(d1.data[i+2]-d2.data[i+2]);n++;}
+  if(!n)return 0;
+  return Math.sqrt(sR*sR+sG*sG+sB*sB)/(n*Math.sqrt(3))*3.5;
+}
+function deClass(v){return v<3?'dg':v<6?'dw':'dr';}
+function dlCanvas(id,name){
+  var a=document.createElement('a');a.href=$(id).toDataURL('image/png');
+  a.download=name+'_'+new Date().toISOString().slice(0,10)+'.png';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+
+/* ① DRAG — RAF throttle, no imgToData on move */
+var _ds={};
+function setupDrag(cvId,who){
+  if(_ds[cvId])return; _ds[cvId]=true;
+  var cv=$(cvId),dirty=false;
+  function pos(e){
+    var r=cv.getBoundingClientRect(),src=(e.touches?e.touches[0]:e);
+    return{x:(src.clientX-r.left)*cv.width/r.width, y:(src.clientY-r.top)*cv.height/r.height};
+  }
+  function md(e){var p=pos(e);S.drag={on:true,sx:p.x,sy:p.y,ex:p.x,ey:p.y,who:who};e.preventDefault();}
+  function mm(e){
+    if(!S.drag.on||S.drag.who!==who)return;
+    var p=pos(e);S.drag.ex=p.x;S.drag.ey=p.y;
+    if(!dirty){dirty=true;requestAnimationFrame(function(){
+      dirty=false;
+      if(who==='c1')drawC1(); else if(who==='c2')drawC2(); else if(who==='cut')drawCut();
+    });}
+  }
+  function mu(e){
+    if(!S.drag.on||S.drag.who!==who)return;
+    S.drag.on=false;
+    var rw=Math.abs(S.drag.ex-S.drag.sx),rh=Math.abs(S.drag.ey-S.drag.sy);
+    if(rw<4||rh<4){if(who==='c1')drawC1();else if(who==='c2')drawC2();else drawCut();return;}
+    var rect={x:Math.min(S.drag.sx,S.drag.ex),y:Math.min(S.drag.sy,S.drag.ey),w:rw,h:rh};
+    if(who==='c1'){S.crop1=rect;$('bcrop1').disabled=false;$('bclr1').disabled=false;drawC1();}
+    if(who==='c2'){S.crop2=rect;$('bcrop2').disabled=false;$('bclr2').disabled=false;drawC2();}
+    if(who==='cut'){S.cutRect=rect;$('bCutOk').disabled=false;$('bCutClr').disabled=false;drawCut();}
+  }
+  function te(e){
+    if(!S.drag.on||S.drag.who!==who)return;
+    var r=cv.getBoundingClientRect(),t=e.changedTouches[0];
+    S.drag.ex=(t.clientX-r.left)*cv.width/r.width;
+    S.drag.ey=(t.clientY-r.top)*cv.height/r.height;
+    mu(e);
+  }
+  cv.addEventListener('mousedown',md); cv.addEventListener('mousemove',mm); cv.addEventListener('mouseup',mu);
+  cv.addEventListener('touchstart',md,{passive:false}); cv.addEventListener('touchmove',mm,{passive:false}); cv.addEventListener('touchend',te,{passive:false});
+}
+
+/* ═══ PAGE 1 ═══ */
+buildSliders('adj1box','a1',S.adj1,function(){rebuildCache1();drawC1();});
+
+$('f1').addEventListener('change',function(e){
+  var file=e.target.files[0];if(!file)return;
+  var img=new Image();
+  img.onload=function(){
+    S.img1=img;$('uico1').style.display='none';$('uhi1').style.display='none';
+    $('uz1').classList.add('has');$('ch1').textContent='ドラッグして比較領域②を選択してください';
+    S.crop1=null;S.crop1Data=null;hide('cprev1');$('bcrop1').disabled=true;$('bclr1').disabled=true;
+    rebuildCache1();drawC1();setupDrag('cv1','c1');
+  };
+  img.src=URL.createObjectURL(file);
+});
+
+function confirmCrop(n){
+  if(n===1){
+    if(!S.crop1||!S.cache1)return;
+    var cv=$('cv1');
+    S.crop1Data=cv.getContext('2d').getImageData(S.crop1.x,S.crop1.y,Math.max(1,S.crop1.w),Math.max(1,S.crop1.h));
+    var pc=$('cpv1');pc.width=S.crop1.w;pc.height=S.crop1.h;pc.getContext('2d').putImageData(S.crop1Data,0,0);
+    show('cprev1');updateCompare();
+  }else{
+    if(!S.crop2||!S.img2)return;
+    var cv2=$('cv2');
+    S.crop2Data=cv2.getContext('2d').getImageData(S.crop2.x,S.crop2.y,Math.max(1,S.crop2.w),Math.max(1,S.crop2.h));
+    var pc2=$('cpv2');pc2.width=S.crop2.w;pc2.height=S.crop2.h;pc2.getContext('2d').putImageData(S.crop2Data,0,0);
+    show('cprev2');updateCompare();applyCorr();
+  }
+}
+function clearCrop(n){
+  if(n===1){S.crop1=null;S.crop1Data=null;$('bcrop1').disabled=true;$('bclr1').disabled=true;hide('cprev1');drawC1();updateCompare();}
+  else{S.crop2=null;S.crop2Data=null;$('bcrop2').disabled=true;$('bclr2').disabled=true;hide('cprev2');drawC2();updateCompare();}
+}
+
+/* ═══ PAGE 2 ═══ */
+buildSliders('corrbox','c',S.adjC,function(){rebuildCache2();applyCorr();});
+
+$('f2').addEventListener('change',function(e){
+  var file=e.target.files[0];if(!file)return;
+  var img=new Image();
+  img.onload=function(){
+    S.img2=img;$('uico2').style.display='none';$('uhi2').style.display='none';
+    $('uz2').classList.add('has');$('ch2').textContent='ドラッグして比較領域③を選択してください';
+    S.crop2=null;S.crop2Data=null;hide('cprev2');$('bcrop2').disabled=true;$('bclr2').disabled=true;
+    rebuildCache2();drawC2();setupDrag('cv2','c2');applyCorr();
+  };
+  img.src=URL.createObjectURL(file);
+});
+
+var STRIP_H=90;
+function applyCorr(){
+  if(!S.img2)return;
+  S.corrData=S.cache2adj||S.cache2raw;
+  if(!S.corrData)return;
+  var cc=$('cvCorr');cc.width=S.corrData.width;cc.height=S.corrData.height;cc.getContext('2d').putImageData(S.corrData,0,0);
+  $('btnDlCorr').disabled=false;
+  drawStrip($('prevBefore'),S.cache2raw);drawStrip($('prevAfter'),S.corrData);
+  if(S.cache2raw){var de=deltaE(S.cache2raw,S.corrData);var dv=$('deltaCorr');dv.textContent=de.toFixed(1);dv.className='dv '+deClass(de);}
+  updateCorrCompare(S.corrData);
+}
+
+function drawStrip(canvas,data){
+  if(!data){canvas.width=200;canvas.height=STRIP_H;return;}
+  var sc=STRIP_H/data.height;
+  canvas.width=Math.max(1,Math.round(data.width*sc));canvas.height=STRIP_H;
+  var wc=$('wc');wc.width=data.width;wc.height=data.height;wc.getContext('2d').putImageData(data,0,0);
+  canvas.getContext('2d').drawImage(wc,0,0,canvas.width,canvas.height);
+}
+
+function updateCompare(){
+  drawStrip($('cmpL'),S.crop1Data);drawStrip($('cmpR'),S.crop2Data);recalcDE();
+}
+function updateCorrCompare(corrFull){
+  if(!S.crop2||!corrFull)return;
+  var wc=$('wc');wc.width=corrFull.width;wc.height=corrFull.height;wc.getContext('2d').putImageData(corrFull,0,0);
+  var c=S.crop2,cx=Math.min(c.x,corrFull.width-1),cy=Math.min(c.y,corrFull.height-1);
+  var cw=Math.min(c.w,corrFull.width-cx),ch=Math.min(c.h,corrFull.height-cy);
+  if(cw<1||ch<1)return;
+  var cc=wc.getContext('2d').getImageData(cx,cy,cw,ch);
+  drawStrip($('cmpR'),cc);
+  if(S.crop1Data){var de=deltaE(S.crop1Data,cc);var dv=$('deltaDE');dv.textContent=de.toFixed(1);dv.className='dv '+deClass(de);}
+}
+function recalcDE(){
+  if(!S.crop1Data||!S.crop2Data){$('deltaDE').textContent='—';$('deltaDE').className='dv';return;}
+  var de=deltaE(S.crop1Data,S.crop2Data);var dv=$('deltaDE');dv.textContent=de.toFixed(1);dv.className='dv '+deClass(de);
+}
+
+/* ═══ PAGE 3: CUT ═══ */
+function syncPage3(){
+  if(!S.corrData){$('chCut').textContent='← ページ②で補正を完了させると表示されます';return;}
+  var cvCut=$('cvCut');cvCut.width=S.corrData.width;cvCut.height=S.corrData.height;
+  drawCut();setupDrag('cvCut','cut');
+  $('chCut').textContent='ドラッグして切り取り領域⑤を選択してください';
+  if(S.img1)syncPaste();
+}
+function confirmCut(){
+  if(!S.cutRect||!S.corrData)return;
+  var wc=$('wc');wc.width=S.corrData.width;wc.height=S.corrData.height;wc.getContext('2d').putImageData(S.corrData,0,0);
+  var c=S.cutRect;
+  S.cutData=wc.getContext('2d').getImageData(c.x,c.y,Math.max(1,c.w),Math.max(1,c.h));
+  var pc=$('cvCutPrev');pc.width=c.w;pc.height=c.h;pc.getContext('2d').putImageData(S.cutData,0,0);show('cutPrev');
+  $('btnAdd').disabled=false;$('chPaste').textContent='「貼り付ける」を押すと中央に配置されます';
+}
+function clearCut(){S.cutRect=null;$('bCutOk').disabled=true;$('bCutClr').disabled=true;drawCut();}
+
+/* ═══ PAGE 3: PASTE ═══ */
+/*
+  ハンドルはHTMLオーバーレイなし。
+  canvas上に直接描画 + マウスヒットテストで完全制御。
+  これにより transform / pointer-events の競合を完全回避。
+*/
+var PT = { active:false, mode:'', smx:0, smy:0, sx:0, sy:0, sw:0, sh:0, srot:0 };
+var HSIZE = 10; /* ハンドルの半径(canvas px) */
+
+/* canvas座標変換 — getBoundingClientRect基準(object-fitなし前提) */
+function canvasPt(e, cv) {
+  var r = cv.getBoundingClientRect();
+  var src = e.touches ? e.touches[0] : e.changedTouches ? e.changedTouches[0] : e;
+  return {
+    x: (src.clientX - r.left) * cv.width  / r.width,
+    y: (src.clientY - r.top)  * cv.height / r.height
+  };
+}
+
+/* ハンドル座標を返す(canvas px、回転済み) */
+function getHandles(p) {
+  var hw = p.w/2, hh = p.h/2;
+  var cos = Math.cos(p.rot), sin = Math.sin(p.rot);
+  function rot(lx, ly) {
+    return { x: p.x + lx*cos - ly*sin, y: p.y + lx*sin + ly*cos };
+  }
+  return {
+    nw:  rot(-hw, -hh),
+    ne:  rot( hw, -hh),
+    sw:  rot(-hw,  hh),
+    se:  rot( hw,  hh),
+    rot: rot(  0, -hh - 28)
+  };
+}
+
+/* ハンドルへのヒットテスト */
+function hitHandle(pt, p) {
+  var h = getHandles(p);
+  var keys = ['rot','nw','ne','sw','se'];
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    var dx = pt.x - h[k].x, dy = pt.y - h[k].y;
+    if (Math.sqrt(dx*dx + dy*dy) <= HSIZE + 4) return k;
+  }
+  return null;
+}
+
+/* 画像本体へのヒットテスト(回転考慮) */
+function hitBody(pt, p) {
+  var cos = Math.cos(-p.rot), sin = Math.sin(-p.rot);
+  var dx = pt.x - p.x, dy = pt.y - p.y;
+  var lx =  dx*cos - dy*sin;
+  var ly =  dx*sin + dy*cos;
+  return Math.abs(lx) <= p.w/2 && Math.abs(ly) <= p.h/2;
+}
+
+function syncPaste() {
+  if (!S.img1) return;
+  var cv = $('cvPaste');
+  cv.width  = S.img1.naturalWidth;
+  cv.height = S.img1.naturalHeight;
+  drawPaste();
+  if (!window._pasteEvInit) { window._pasteEvInit = true; initPasteEvents(); }
+}
+
+function addPaste() {
+  if (!S.cutData || !S.img1) return;
+  var cv = $('cvPaste');
+  var sc = Math.min(cv.width*0.4/S.cutData.width, cv.height*0.4/S.cutData.height, 2);
+  S.pasteList.push({
+    x: cv.width/2, y: cv.height/2,
+    w: S.cutData.width*sc, h: S.cutData.height*sc,
+    rot: 0, op: +$('pOp').value/100, data: S.cutData
+  });
+  S.selIdx = S.pasteList.length - 1;
+  $('btnDel').disabled = false; $('btnDlFinal').disabled = false;
+  drawPaste();
+}
+
+function delSelected() {
+  if (S.selIdx < 0) return;
+  S.pasteList.splice(S.selIdx, 1);
+  S.selIdx = S.pasteList.length - 1;
+  if (S.selIdx < 0) $('btnDel').disabled = true;
+  drawPaste();
+}
+function undoPaste() {
+  if (!S.pasteList.length) return;
+  S.pasteList.pop();
+  S.selIdx = S.pasteList.length - 1;
+  if (S.selIdx < 0) $('btnDel').disabled = true;
+  drawPaste();
+}
+function resetPaste() {
+  S.pasteList = []; S.selIdx = -1;
+  $('btnDel').disabled = true; $('btnDlFinal').disabled = true;
+  drawPaste();
+}
+
+$('pOp').addEventListener('input', function() {
+  $('vpOp').textContent = this.value + '%';
+  if (S.selIdx >= 0 && S.pasteList[S.selIdx]) {
+    S.pasteList[S.selIdx].op = this.value/100; drawPaste();
+  }
+});
+
+function drawPaste() {
+  var cv = $('cvPaste'); if (!S.img1) return;
+  var ctx = cv.getContext('2d');
+
+  /* ── ベース画像 ── */
+  if (S.cache1) {
+    var wc = $('wc'); wc.width = S.cache1.width; wc.height = S.cache1.height;
+    wc.getContext('2d').putImageData(S.cache1, 0, 0); ctx.drawImage(wc, 0, 0);
+  } else { ctx.drawImage(S.img1, 0, 0); }
+
+  /* ── 貼り付けアイテム ── */
+  S.pasteList.forEach(function(p, idx) {
+    var wc2 = $('wc'); wc2.width = p.data.width; wc2.height = p.data.height;
+    wc2.getContext('2d').putImageData(p.data, 0, 0);
+    ctx.save(); ctx.globalAlpha = p.op;
+    ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+    ctx.drawImage(wc2, -p.w/2, -p.h/2, p.w, p.h);
+    ctx.restore();
+
+    /* 選択中のみハンドルを描画 */
+    if (idx === S.selIdx) drawHandles(ctx, p);
+  });
+}
+
+/* canvas上にハンドルを描く */
+function drawHandles(ctx, p) {
+  var h = getHandles(p);
+  ctx.save();
+
+  /* 枠線 */
+  ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 3; ctx.setLineDash([]);
+  ctx.beginPath();
+  var cos = Math.cos(p.rot), sin = Math.sin(p.rot);
+  var hw = p.w/2, hh = p.h/2;
+  ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+  ctx.strokeRect(-hw, -hh, p.w, p.h);
+  ctx.strokeStyle = '#5B9BD5'; ctx.lineWidth = 1.5; ctx.setLineDash([6,3]);
+  ctx.strokeRect(-hw, -hh, p.w, p.h);
+  /* 回転ハンドル線 */
+  ctx.setLineDash([]); ctx.strokeStyle='rgba(255,255,255,0.6)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(0,-hh); ctx.lineTo(0,-hh-28); ctx.stroke();
+  ctx.restore();
+
+  /* ハンドル丸 */
+  var handles = [
+    {k:'nw',pos:h.nw,col:'#5B9BD5'},{k:'ne',pos:h.ne,col:'#5B9BD5'},
+    {k:'sw',pos:h.sw,col:'#5B9BD5'},{k:'se',pos:h.se,col:'#5B9BD5'},
+    {k:'rot',pos:h.rot,col:'#ffffff'}
+  ];
+  handles.forEach(function(hd) {
+    ctx.save();
+    ctx.beginPath(); ctx.arc(hd.pos.x, hd.pos.y, HSIZE, 0, Math.PI*2);
+    ctx.fillStyle = hd.col; ctx.fill();
+    ctx.strokeStyle = hd.col === '#ffffff' ? '#5B9BD5' : '#fff';
+    ctx.lineWidth = 2; ctx.setLineDash([]); ctx.stroke();
+    ctx.restore();
+  });
+}
+
+/* カーソル種別 */
+function getCursor(pt) {
+  if (S.selIdx < 0 || !S.pasteList[S.selIdx]) return 'default';
+  var p = S.pasteList[S.selIdx];
+  var hk = hitHandle(pt, p);
+  if (hk === 'rot') return 'grab';
+  if (hk === 'nw' || hk === 'se') return 'nwse-resize';
+  if (hk === 'ne' || hk === 'sw') return 'nesw-resize';
+  if (hitBody(pt, p)) return 'move';
+  /* 別のアイテムの上 */
+  for (var i = S.pasteList.length-1; i >= 0; i--) {
+    if (hitBody(pt, S.pasteList[i])) return 'move';
+  }
+  return 'default';
+}
+
+function initPasteEvents() {
+  var cv = $('cvPaste');
+
+  cv.addEventListener('mousemove', function(e) {
+    if (PT.active) return;
+    cv.style.cursor = getCursor(canvasPt(e, cv));
+  });
+
+  cv.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    var pt = canvasPt(e, cv);
+
+    /* 選択中アイテムのハンドルチェック */
+    if (S.selIdx >= 0 && S.pasteList[S.selIdx]) {
+      var p = S.pasteList[S.selIdx];
+      var hk = hitHandle(pt, p);
+      if (hk) {
+        PT = { active:true, mode: hk==='rot'?'rotate':'sc-'+hk,
+               smx:pt.x, smy:pt.y,
+               sx:p.x, sy:p.y, sw:p.w, sh:p.h, srot:p.rot };
+        return;
+      }
+      if (hitBody(pt, p)) {
+        PT = { active:true, mode:'move',
+               smx:pt.x, smy:pt.y,
+               sx:p.x, sy:p.y, sw:p.w, sh:p.h, srot:p.rot };
+        return;
+      }
+    }
+
+    /* 別アイテムの選択 */
+    for (var i = S.pasteList.length-1; i >= 0; i--) {
+      if (hitBody(pt, S.pasteList[i])) {
+        S.selIdx = i; drawPaste(); return;
+      }
+    }
+    /* 何もなければ選択解除 */
+    S.selIdx = -1; drawPaste();
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!PT.active || S.selIdx < 0) return;
+    var pt = canvasPt(e, cv);
+    var p  = S.pasteList[S.selIdx];
+    if (!p) return;
+    var dx = pt.x - PT.smx, dy = pt.y - PT.smy;
+
+    if (PT.mode === 'move') {
+      p.x = PT.sx + dx; p.y = PT.sy + dy;
+
+    } else if (PT.mode === 'rotate') {
+      var a  = Math.atan2(pt.y - PT.sy, pt.x - PT.sx);
+      var a0 = Math.atan2(PT.smy - PT.sy, PT.smx - PT.sx);
+      p.rot  = PT.srot + (a - a0);
+
+    } else if (PT.mode.indexOf('sc-') === 0) {
+      var corner = PT.mode.slice(3).toUpperCase();
+      /* ドラッグ量をアイテムのローカル座標系に変換 */
+      var cos = Math.cos(-p.rot), sin = Math.sin(-p.rot);
+      var ldx = dx*cos - dy*sin, ldy = dx*sin + dy*cos;
+      var sX = (corner==='NE'||corner==='SE') ? 1 : -1;
+      var sY = (corner==='SW'||corner==='SE') ? 1 : -1;
+      var delta = (Math.abs(ldx) >= Math.abs(ldy)) ? sX*ldx : sY*ldy;
+      var ratio = PT.sh / PT.sw;
+      p.w = Math.max(20, PT.sw + delta * 2);
+      p.h = p.w * ratio;
+    }
+
+    drawPaste();
+  });
+
+  document.addEventListener('mouseup', function() { PT.active = false; });
+}
+
+/* ═══════════════════════════════════════════════
+   PAGE 4: カラーピッカー
+═══════════════════════════════════════════════ */
+var PICKS=[];
+var _pickSrcIdx=0; /* 0=finalPaste, 1=clinic, 2=corrected */
+var _pickSrcs=[];  /* list of available sources */
+var _pickReady=false;
+
+/* ④ RGB→Lab */
+function rgbToLab(r,g,b){
+  function lin(v){v/=255;return v>0.04045?Math.pow((v+0.055)/1.055,2.4):v/12.92;}
+  var rl=lin(r),gl=lin(g),bl=lin(b);
+  var X=(rl*0.4124564+gl*0.3575761+bl*0.1804375)/0.95047;
+  var Y=(rl*0.2126729+gl*0.7151522+bl*0.0721750)/1.00000;
+  var Z=(rl*0.0193339+gl*0.1191920+bl*0.9503041)/1.08883;
+  function f(t){return t>0.008856?Math.cbrt(t):(7.787*t+16/116);}
+  var fx=f(X),fy=f(Y),fz=f(Z);
+  return{L:116*fy-16,a:500*(fx-fy),b:200*(fy-fz)};
+}
+function toHex(r,g,b){return '#'+[r,g,b].map(function(v){return('0'+Math.round(v).toString(16)).slice(-2);}).join('');}
+
+function syncPickerPage(){
+  /* collect sources */
+  _pickSrcs=[];
+  if($('cvPaste').width>1)_pickSrcs.push({label:'完成画像',id:'cvPaste'});
+  if($('cvCorr').width>1)_pickSrcs.push({label:'補正後手元',id:'cvCorr'});
+  if(S.cache1)_pickSrcs.push({label:'クリニック写真',id:'cv1'});
+  if(!_pickSrcs.length){$('pickHintBar').textContent='先にページ①〜③で画像を読み込んでください';return;}
+
+  loadPickSrc(0);
+}
+
+function loadPickSrc(idx){
+  _pickSrcIdx=idx;
+  var src=_pickSrcs[idx];
+  if(!src)return;
+  var srcCv=$(src.id);
+  var dst=$('cvPickSrc');
+  /* copy srcCv into dst at native resolution */
+  dst.width=srcCv.width;dst.height=srcCv.height;
+  var ctx=dst.getContext('2d');
+  /* draw from ImageData if available for pixel-perfect */
+  ctx.drawImage(srcCv,0,0);
+  $('pickHintBar').textContent='【'+src.label+'】画像をクリックして色を取得（最大6点）';
+  if(!_pickReady){_pickReady=true;setupPickerEvents();}
+  renderPickGrid();
+}
+
+function pickSwitchSrc(){
+  if(!_pickSrcs.length)return;
+  _pickSrcIdx=(_pickSrcIdx+1)%_pickSrcs.length;
+  loadPickSrc(_pickSrcIdx);
+}
+
+/* ④ ピンポイント取得：devicePixelRatioを考慮 */
+function setupPickerEvents(){
+  /* NOTE: object-fit:contain is removed from canvas CSS.
+     canvas is display:block; width:100%; height:auto.
+     So getBoundingClientRect() on the canvas itself is the image area — no offset. */
+  var cv  = $('cvPickSrc');
+  var dot = $('pickDot');
+  var ch  = $('pickCH'), cv2 = $('pickCV');
+  var mag = $('pickMag');
+
+  /* ── Helper: convert mouse event → canvas pixel coords ── */
+  function toPx(e){
+    var r  = cv.getBoundingClientRect();           /* canvas display rect */
+    var ex = e.clientX - r.left;
+    var ey = e.clientY - r.top;
+    /* canvas logical size vs rendered size */
+    var px = Math.round(ex * cv.width  / r.width);
+    var py = Math.round(ey * cv.height / r.height);
+    px = Math.max(0, Math.min(cv.width  - 1, px));
+    py = Math.max(0, Math.min(cv.height - 1, py));
+    return { ex:ex, ey:ey, px:px, py:py, rw:r.width, rh:r.height };
+  }
+
+  cv.addEventListener('mousemove', function(e){
+    var p = toPx(e);
+    /* crosshair lines (positioned inside pickWrap, relative to wrap) */
+    ch.style.top    = p.ey + 'px'; ch.style.height = '1px';  ch.style.width  = '100%'; ch.style.display = 'block';
+    cv2.style.left  = p.ex + 'px'; cv2.style.width = '1px';  cv2.style.height = '100%'; cv2.style.display = 'block';
+    /* dot */
+    dot.style.display = 'block';
+    dot.style.left = p.ex + 'px'; dot.style.top = p.ey + 'px';
+    /* magnifier position (follow cursor, flip near edges) */
+    var mx = p.ex + 22, my = p.ey + 22;
+    if(mx + 80 > p.rw) mx = p.ex - 102;
+    if(my + 80 > p.rh) my = p.ey - 102;
+    mag.style.left    = mx + 'px';
+    mag.style.top     = my + 'px';
+    mag.style.display = 'block';
+    /* draw magnified region (10×10 px around cursor → 80×80 canvas = 8× zoom) */
+    var mc = $('cvMag'); mc.width = 80; mc.height = 80;
+    var mctx = mc.getContext('2d');
+    mctx.imageSmoothingEnabled = false;
+    var srcX = Math.max(0, p.px - 5), srcY = Math.max(0, p.py - 5);
+    var srcW = Math.min(10, cv.width  - srcX);
+    var srcH = Math.min(10, cv.height - srcY);
+    mctx.drawImage(cv, srcX, srcY, srcW, srcH, 0, 0, 80, 80);
+    /* crosshair on magnifier */
+    mctx.strokeStyle = 'rgba(91,155,213,0.9)'; mctx.lineWidth = 1;
+    mctx.beginPath(); mctx.moveTo(40,0);  mctx.lineTo(40,80); mctx.stroke();
+    mctx.beginPath(); mctx.moveTo(0, 40); mctx.lineTo(80,40); mctx.stroke();
+  });
+
+  cv.addEventListener('mouseleave', function(){
+    dot.style.display = 'none';
+    ch.style.display  = 'none';
+    cv2.style.display = 'none';
+    mag.style.display = 'none';
+  });
+
+  /* click → pick exact pixel */
+  cv.addEventListener('click', function(e){
+    if(PICKS.length >= 6) return;
+    var p   = toPx(e);
+    var id  = cv.getContext('2d').getImageData(p.px, p.py, 1, 1).data;
+    var rr  = id[0], gg = id[1], bb = id[2];
+    var lab = rgbToLab(rr, gg, bb);
+    PICKS.push({ r:rr, g:gg, b:bb, L:lab.L, a:lab.a, b:lab.b,
+                 hex:toHex(rr,gg,bb), px:p.px, py:p.py });
+    renderPickGrid();
+    dot.style.boxShadow = '0 0 0 3px #5B9BD5, 0 0 12px rgba(91,155,213,0.9)';
+    setTimeout(function(){ dot.style.boxShadow = ''; }, 350);
+    $('btnDlPick').disabled = false;
+  });
+}
+
+function renderPickGrid(){
+  var grid=$('pickGrid');grid.innerHTML='';
+  /* 6 cells: left col = indices 0,1,2; right col = 3,4,5 (grid is 2 columns) */
+  /* CSS grid auto-fills left then right, so just push 6 cells in order */
+  for(var i=0;i<6;i++){
+    var p=PICKS[i];
+    var cell=document.createElement('div');
+    cell.className='pick-cell'+(p?'':' empty');
+    var col=(i<3)?'left':'right';
+    cell.innerHTML='<div class="pick-cell-header">'+
+      '<span class="pick-badge">'+(i+1)+'</span>'+
+      '<div class="pick-swatch" style="background:'+(p?p.hex:'#2a2825')+'"></div>'+
+      '<div class="pick-meta">'+
+        '<span class="pick-hex-txt">'+(p?p.hex.toUpperCase():'—')+'</span>'+
+        '<span class="pick-lab-txt">'+(p?('L*'+p.L.toFixed(1)+' a*'+p.a.toFixed(1)+' b*'+p.b.toFixed(1)):'L* — a* — b* —')+'</span>'+
+      '</div>'+
+    '</div>';
+    grid.appendChild(cell);
+  }
+  /* status */
+  var st=$('pickStatus');
+  if(PICKS.length===0) st.textContent='画像をクリックして色を取得してください（最大6点）';
+  else if(PICKS.length<6) st.textContent=PICKS.length+'点取得済み — あと'+(6-PICKS.length)+'点クリックしてください';
+  else st.textContent='6点取得完了 ✓ リセットでやり直せます';
+}
+
+function resetPicker(){
+  PICKS=[];renderPickGrid();$('btnDlPick').disabled=true;
+}
+
+function dlPickResults(){
+  /* export a small summary PNG */
+  var wc=$('wc');
+  var cols=2,rows=3,cw=200,rh=50,pad=10;
+  wc.width=cols*cw+pad*(cols+1);wc.height=rows*rh+pad*(rows+1)+40;
+  var ctx=wc.getContext('2d');
+  ctx.fillStyle='#1A1916';ctx.fillRect(0,0,wc.width,wc.height);
+  ctx.fillStyle='#F0EBE3';ctx.font='bold 13px monospace';ctx.fillText('DentalShade — Color Pick Results',pad,22);
+  for(var i=0;i<6;i++){
+    var col=i<3?0:1,row=i<3?i:i-3;
+    var x=pad+col*(cw+pad),y=40+pad+row*(rh+pad);
+    var p=PICKS[i];
+    ctx.fillStyle=p?p.hex:'#2a2825';ctx.fillRect(x,y,rh-4,rh-4);
+    ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.strokeRect(x,y,rh-4,rh-4);
+    ctx.fillStyle='#F0EBE3';ctx.font='11px monospace';
+    ctx.fillText(''+(i+1)+'. '+(p?p.hex.toUpperCase():'—'),x+rh,y+16);
+    ctx.fillStyle='rgba(240,235,227,0.55)';ctx.font='10px monospace';
+    ctx.fillText(p?('L*'+p.L.toFixed(1)+' a*'+p.a.toFixed(1)+' b*'+p.b.toFixed(1)):'',x+rh,y+32);
+  }
+  dlCanvas('wc','color_picks');
+}
+
+/* ═══ INIT ═══ */
+(function(){
+  /* pasteOv removed - handles drawn on canvas */
+  /* init compare canvases */
+  [$('cmpL'),$('cmpR'),$('prevBefore'),$('prevAfter')].forEach(function(c){c.width=200;c.height=STRIP_H||90;});
+  renderPickGrid();
+})();
+
+
+/* ══════════════════════════════════════════════════
+   ケース管理
+══════════════════════════════════════════════════ */
+
+/* 保存対象のステートキー */
+var CASE_KEYS = [
+  'img1','img2','cache1','cache2raw','cache2adj',
+  'adj1','adjC',
+  'crop1','crop2','crop1Data','crop2Data',
+  'corrData','cutRect','cutData',
+  'pasteList','selIdx'
+];
+
+function cloneAdj(adj){ return {L:adj.L,K:adj.K,S:adj.S,T:adj.T,G:adj.G}; }
+
+/* 現在のSをシリアライズ */
+function saveCurrentState(){
+  return {
+    img1:S.img1, img2:S.img2,
+    cache1:S.cache1, cache2raw:S.cache2raw, cache2adj:S.cache2adj,
+    adj1:cloneAdj(S.adj1), adjC:cloneAdj(S.adjC),
+    crop1:S.crop1?{x:S.crop1.x,y:S.crop1.y,w:S.crop1.w,h:S.crop1.h}:null,
+    crop2:S.crop2?{x:S.crop2.x,y:S.crop2.y,w:S.crop2.w,h:S.crop2.h}:null,
+    crop1Data:S.crop1Data, crop2Data:S.crop2Data,
+    corrData:S.corrData,
+    cutRect:S.cutRect?{x:S.cutRect.x,y:S.cutRect.y,w:S.cutRect.w,h:S.cutRect.h}:null,
+    cutData:S.cutData,
+    pasteList:S.pasteList.slice(),
+    selIdx:S.selIdx
+  };
+}
+
+/* 保存済みステートをSに復元してUIを再描画 */
+function restoreState(st){
+  S.img1=st.img1; S.img2=st.img2;
+  S.cache1=st.cache1; S.cache2raw=st.cache2raw; S.cache2adj=st.cache2adj;
+  /* adj オブジェクト自体は差し替えない（スライダーのクロージャが参照しているため）
+     プロパティだけ上書きする */
+  SLD.forEach(function(s){ S.adj1[s.k]=st.adj1[s.k]||0; S.adjC[s.k]=st.adjC[s.k]||0; });
+  S.crop1=st.crop1; S.crop2=st.crop2;
+  S.crop1Data=st.crop1Data; S.crop2Data=st.crop2Data;
+  S.corrData=st.corrData;
+  S.cutRect=st.cutRect; S.cutData=st.cutData;
+  S.pasteList=st.pasteList.slice(); S.selIdx=st.selIdx;
+  S.drag={on:false,sx:0,sy:0,ex:0,ey:0,who:''};
+
+  /* スライダーUI同期 */
+  SLD.forEach(function(s){
+    var v1=S.adj1[s.k]||0, vc=S.adjC[s.k]||0;
+    var el1=$('a1'+s.k); if(el1){ el1.value=v1; }
+    var sv1=$('v'+'a1'+s.k); if(sv1){ sv1.textContent=(v1>0?'+':'')+v1; }
+    var elc=$('c'+s.k); if(elc){ elc.value=vc; }
+    var svc=$('v'+'c'+s.k); if(svc){ svc.textContent=(vc>0?'+':'')+vc; }
+  });
+
+  /* 画像UI */
+  if(S.img1){
+    $('uico1').style.display='none'; $('uhi1').style.display='none';
+    $('uz1').classList.add('has');
+    $('ch1').textContent='ドラッグして比較領域②を選択してください';
+    $('bcrop1').disabled=!S.crop1; $('bclr1').disabled=!S.crop1;
+    if(S.crop1Data){show('cprev1');}else{hide('cprev1');}
+    rebuildCache1(); drawC1(); setupDrag('cv1','c1');
+  } else {
+    $('uico1').style.display=''; $('uhi1').style.display='';
+    $('uz1').classList.remove('has');
+    $('ch1').textContent='← 写真をアップロードすると表示されます';
+    $('bcrop1').disabled=true; $('bclr1').disabled=true; hide('cprev1');
+    var cv1=$('cv1'); cv1.width=10; cv1.height=10;
+  }
+  if(S.img2){
+    $('uico2').style.display='none'; $('uhi2').style.display='none';
+    $('uz2').classList.add('has');
+    $('ch2').textContent='ドラッグして比較領域③を選択してください';
+    $('bcrop2').disabled=!S.crop2; $('bclr2').disabled=!S.crop2;
+    if(S.crop2Data){show('cprev2');}else{hide('cprev2');}
+    drawC2(); setupDrag('cv2','c2');
+    applyCorr();
+  } else {
+    $('uico2').style.display=''; $('uhi2').style.display='';
+    $('uz2').classList.remove('has');
+    $('ch2').textContent='← 写真をアップロードすると表示されます';
+    $('bcrop2').disabled=true; $('bclr2').disabled=true; hide('cprev2');
+    var cv2=$('cv2'); cv2.width=10; cv2.height=10;
+  }
+  /* crop previews */
+  if(S.crop1Data){
+    var pc=$('cpv1'); pc.width=S.crop1.w; pc.height=S.crop1.h;
+    pc.getContext('2d').putImageData(S.crop1Data,0,0);
+  }
+  if(S.crop2Data){
+    var pc2=$('cpv2'); pc2.width=S.crop2.w; pc2.height=S.crop2.h;
+    pc2.getContext('2d').putImageData(S.crop2Data,0,0);
+  }
+  updateCompare();
+  /* cut data preview */
+  if(S.cutData){
+    show('cutPrev');
+    var pcc=$('cvCutPrev'); pcc.width=S.cutData.width; pcc.height=S.cutData.height;
+    pcc.getContext('2d').putImageData(S.cutData,0,0);
+    $('btnAdd').disabled=false;
+  } else {
+    hide('cutPrev'); $('btnAdd').disabled=true;
+  }
+  $('btnDel').disabled=(S.selIdx<0||!S.pasteList.length);
+  $('btnDlFinal').disabled=!S.pasteList.length;
+  /* reset paste canvas size so syncPaste re-initialises */
+  window._pasteEvInit=false;
+}
+
+/* ── ケースデータ ── */
+var CASES = [];    /* [{id, name, state}] */
+var CUR   = 0;    /* 現在のケースindex */
+var DELETED = []; /* undoスタック: [{idx, item}] */
+var _caseIdSeq = 1;
+
+function emptyState(){
+  return {
+    img1:null, img2:null, cache1:null, cache2raw:null, cache2adj:null,
+    adj1:{L:0,K:0,S:0,T:0,G:0}, adjC:{L:0,K:0,S:0,T:0,G:0},
+    crop1:null, crop2:null, crop1Data:null, crop2Data:null,
+    corrData:null, cutRect:null, cutData:null,
+    pasteList:[], selIdx:-1
+  };
+}
+
+/* タブバーを再描画 */
+function renderCaseTabs(){
+  var bar=$('caseBar');
+  /* 既存タブを全削除（ボタン以外） */
+  Array.from(bar.children).forEach(function(el){
+    if(el.id!=='btnNewCase'&&el.id!=='btnUndoCase') bar.removeChild(el);
+  });
+  /* タブ生成 */
+  CASES.forEach(function(c, idx){
+    var tab=document.createElement('button');
+    tab.className='case-tab'+(idx===CUR?' active':'');
+    tab.dataset.idx=idx;
+    /* 名前（ダブルクリックで編集） */
+    var nameEl=document.createElement('span');
+    nameEl.className='ct-name';
+    nameEl.textContent=c.name;
+    nameEl.title='ダブルクリックで名前変更';
+    nameEl.addEventListener('dblclick',function(e){
+      e.stopPropagation();
+      /* アクティブでなければ先に切り替え */
+      if(idx!==CUR){ switchCase(idx); }
+      var cur=c.name;
+      var inp=document.createElement('input');
+      inp.value=cur;
+      inp.style.cssText='width:84px;background:transparent;border:none;border-bottom:1px solid var(--ac);color:var(--fg);font-size:11px;font-family:inherit;outline:none';
+      nameEl.replaceWith(inp); inp.focus(); inp.select();
+      function done(){
+        var v=inp.value.trim()||cur;
+        c.name=v; inp.replaceWith(nameEl); nameEl.textContent=v;
+      }
+      inp.addEventListener('blur', done);
+      inp.addEventListener('keydown',function(ev){
+        if(ev.key==='Enter'){ ev.preventDefault(); inp.blur(); }
+        if(ev.key==='Escape'){ inp.value=cur; inp.blur(); }
+      });
+    });
+    /* 閉じるボタン */
+    var close=document.createElement('button');
+    close.className='ct-close'; close.textContent='×';
+    close.title='このケースを削除';
+    close.addEventListener('click',function(e){ e.stopPropagation(); deleteCase(idx); });
+    tab.appendChild(nameEl); tab.appendChild(close);
+    tab.addEventListener('click',function(){ switchCase(idx); });
+    /* New Caseボタンの前に挿入 */
+    bar.insertBefore(tab, $('btnNewCase'));
+  });
+  /* タブをスクロールして選択中を表示 */
+  var active=bar.querySelector('.case-tab.active');
+  if(active) active.scrollIntoView({block:'nearest',inline:'nearest'});
+  /* undoボタン状態 */
+  $('btnUndoCase').disabled=(DELETED.length===0);
+}
+
+/* ── ケース切り替え ── */
+function switchCase(idx){
+  if(idx===CUR) return;
+  /* 現在のstateを保存 */
+  CASES[CUR].state=saveCurrentState();
+  /* 新しいケースに切り替え */
+  CUR=idx;
+  restoreState(CASES[CUR].state);
+  renderCaseTabs();
+  goPage(1);
+}
+
+/* ── 新規ケース ── */
+function newCase(){
+  /* 現在のstateを保存 */
+  CASES[CUR].state=saveCurrentState();
+  /* 新ケース追加 */
+  var id=_caseIdSeq++;
+  var newName='Case '+id;
+  CASES.push({id:id, name:newName, state:emptyState()});
+  CUR=CASES.length-1;
+  restoreState(CASES[CUR].state);
+  renderCaseTabs();
+  /* ページ①に戻してスクロール */
+  goPage(1);
+  /* 新タブが見えるようにスクロール（renderCaseTabs後に再スクロール保険） */
+  setTimeout(function(){
+    var bar=$('caseBar');
+    var active=bar.querySelector('.case-tab.active');
+    if(active) active.scrollIntoView({block:'nearest',inline:'end'});
+  }, 30);
+}
+
+/* ── ケース削除 ── */
+function deleteCase(idx){
+  if(CASES.length<=1){
+    /* 最後の1件は削除せずリセット */
+    CASES[0].state=emptyState();
+    CUR=0;
+    restoreState(CASES[0].state);
+    renderCaseTabs();
+    return;
+  }
+  /* 削除前に現stateを保存 */
+  if(idx===CUR) CASES[idx].state=saveCurrentState();
+  /* undoスタックに積む */
+  DELETED.push({idx:idx, item:CASES[idx]});
+  CASES.splice(idx,1);
+  /* CUR調整 */
+  if(CUR>=CASES.length) CUR=CASES.length-1;
+  else if(idx<CUR) CUR--;
+  restoreState(CASES[CUR].state);
+  renderCaseTabs();
+}
+
+/* ── 削除を元に戻す ── */
+function undoDeleteCase(){
+  if(!DELETED.length) return;
+  var d=DELETED.pop();
+  CASES.splice(d.idx,0,d.item);
+  /* CUR調整 */
+  if(d.idx<=CUR) CUR++;
+  /* 元に戻したケースに切り替え */
+  CASES[CUR].state=saveCurrentState();
+  CUR=d.idx;
+  restoreState(CASES[CUR].state);
+  renderCaseTabs();
+}
+
+/* ── 初期化: Case 1 を作成 ── */
+(function initCases(){
+  _caseIdSeq=1;
+  CASES=[{id:1, name:'Case 1', state:emptyState()}];
+  CUR=0;
+  renderCaseTabs();
+})();
+
+
+/* ══════════════════════════════════════════════════
+   ループ処理 — 別の手元写真で何度でも繰り返す
+══════════════════════════════════════════════════ */
+
+/* 手元写真だけリセットしてページ②に戻る */
+function loadNewTechPhoto(){
+  /* img2・補正関連をクリア。クリニック写真(img1)・貼り付け結果はそのまま */
+  S.img2=null; S.cache2raw=null; S.cache2adj=null; S.corrData=null;
+  S.crop2=null; S.crop2Data=null;
+  /* スライダーをリセット（S.adjCオブジェクト自体は差し替えない — クロージャが参照しているため） */
+  SLD.forEach(function(s){
+    S.adjC[s.k]=0;                                 /* プロパティだけゼロに */
+    var el=$('c'+s.k); if(el){ el.value=0; }
+    var vl=$('vc'+s.k); if(vl){ vl.textContent='0'; }
+  });
+  /* UIリセット */
+  $('uico2').style.display=''; $('uhi2').style.display='';
+  $('uz2').classList.remove('has');
+  $('ch2').textContent='← 写真をアップロードすると表示されます';
+  $('bcrop2').disabled=true; $('bclr2').disabled=true;
+  hide('cprev2');
+  var cv2=$('cv2'); cv2.width=10; cv2.height=10;
+  /* file inputをリセット（同じファイルを再選択できるよう） */
+  $('f2').value='';
+  /* 比較ストリップをクリア */
+  drawStrip($('prevBefore'),null); drawStrip($('prevAfter'),null);
+  drawStrip($('cmpL'),S.crop1Data); drawStrip($('cmpR'),null);
+  $('deltaDE').textContent='—'; $('deltaDE').className='dv';
+  $('deltaCorr').textContent='—'; $('deltaCorr').className='dv';
+  /* 補正後キャンバスもクリア */
+  var cc=$('cvCorr'); cc.width=10; cc.height=10;
+  $('btnDlCorr').disabled=true;
+  /* 削除していた _ds キャッシュをクリアして再setupDragできるようにする */
+  delete _ds['cv2'];
+  goPage(2);
+}
+
+/* ④カラーピッカーから「再補正」ボタンで呼ばれる */
+function startNextRound(){
+  loadNewTechPhoto();
+}
+
+</script>
+</body>
+</html>
