@@ -167,6 +167,94 @@ body{background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;heigh
 </head>
 <body>
 
+<style>
+#lockScreen {
+  position: fixed; inset: 0; z-index: 99999;
+  background: #0F0E0C;
+  display: flex; align-items: center; justify-content: center;
+  font-family: system-ui, sans-serif;
+}
+#lockBox {
+  background: #1A1916;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  padding: 36px 32px;
+  width: 320px;
+  text-align: center;
+}
+#lockBox .lock-icon { font-size: 40px; margin-bottom: 16px; }
+#lockBox h2 { color: #F0EBE3; font-size: 16px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.02em; }
+#lockBox p { color: rgba(240,235,227,0.45); font-size: 12px; margin-bottom: 24px; }
+#lockBox input {
+  width: 100%; padding: 11px 14px;
+  background: #0F0E0C; border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 8px; color: #F0EBE3; font-size: 14px;
+  outline: none; margin-bottom: 12px;
+  text-align: center; letter-spacing: 0.1em;
+  font-family: monospace;
+  transition: border-color .15s;
+}
+#lockBox input:focus { border-color: #5B9BD5; }
+#lockBtn {
+  width: 100%; padding: 11px;
+  background: #5B9BD5; color: #fff;
+  border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: background .15s;
+}
+#lockBtn:hover { background: #82BAE8; }
+#lockErr {
+  color: #C05050; font-size: 11px; margin-top: 10px;
+  min-height: 16px;
+}
+#lockBox .lock-sub {
+  font-size: 10px; color: rgba(240,235,227,0.25);
+  margin-top: 20px; font-family: monospace;
+}
+</style>
+
+<div id="lockScreen">
+  <div id="lockBox">
+    <div class="lock-icon">🦷</div>
+    <h2>DentalShade</h2>
+    <p>歯科技工士向け色調補正ツール<br>パスワードを入力してください</p>
+    <input type="password" id="lockInput" placeholder="パスワード" autocomplete="off" />
+    <button id="lockBtn" onclick="checkPassword()">ログイン</button>
+    <div id="lockErr"></div>
+    <div class="lock-sub">DENTAL SHADE MATCHING SYSTEM</div>
+  </div>
+</div>
+
+<script>
+// Check if already unlocked this session
+(function(){
+  if(sessionStorage.getItem('ds_auth')==='ok'){
+    document.getElementById('lockScreen').style.display='none';
+  }
+})();
+
+document.getElementById('lockInput').addEventListener('keydown', function(e){
+  if(e.key==='Enter') checkPassword();
+  document.getElementById('lockErr').textContent='';
+});
+
+function checkPassword(){
+  var pw = document.getElementById('lockInput').value;
+  if(pw === 'gikoudaisuki'){
+    sessionStorage.setItem('ds_auth','ok');
+    var ls = document.getElementById('lockScreen');
+    ls.style.opacity='0';
+    ls.style.transition='opacity 0.3s';
+    setTimeout(function(){ ls.style.display='none'; }, 300);
+  } else {
+    document.getElementById('lockErr').textContent = 'パスワードが違います';
+    document.getElementById('lockInput').value = '';
+    document.getElementById('lockInput').focus();
+  }
+}
+</script>
+
+
 <div id="topbar">
   <div id="logo">Dental<span>Shade</span></div>
   <button class="tab active" id="tab1" onclick="goPage(1)">① クリニック写真</button>
