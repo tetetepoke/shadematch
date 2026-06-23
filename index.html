@@ -15,6 +15,48 @@
   --green:#5A9E72; --red:#C05050;
 }
 body{background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── 顔貌分析ページ ── */
+#page5{background:#f0f0f0;color:#222;overflow:auto;flex-direction:column}
+#page5 .fa-toolbar{
+  display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+  padding:10px 16px;background:#fff;border-bottom:1px solid #ddd;
+  position:sticky;top:0;z-index:10;flex-shrink:0;
+}
+.fa-tbtn{
+  padding:7px 15px;font-size:13px;border-radius:6px;
+  border:1px solid #ccc;background:#fff;color:#333;
+  cursor:pointer;white-space:nowrap;
+}
+.fa-tbtn:hover{background:#e8e8e8}
+.fa-tbtn.on{background:#222;color:#fff;border-color:#222}
+.fa-tbtn.green{background:#28a070;color:#fff;border-color:#28a070}
+.fa-tbtn.green:hover{background:#1e8060}
+.fa-vsep{width:1px;height:26px;background:#ddd;flex-shrink:0}
+#fa-main{flex:1;display:flex;flex-direction:column;align-items:center;padding:16px;gap:12px}
+#fa-dropzone{
+  width:100%;max-width:1200px;min-height:420px;
+  background:#222;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+#fa-hint-box{
+  display:flex;flex-direction:column;align-items:center;
+  gap:10px;color:#888;font-size:15px;cursor:pointer;
+  border:2px dashed #555;border-radius:8px;padding:50px 60px;
+}
+#fa-hint-box:hover{border-color:#888;color:#aaa}
+#fa-mycanvas{max-width:100%;max-height:85vh;cursor:crosshair;display:none}
+.fa-srow{
+  width:100%;max-width:1200px;display:none;align-items:center;
+  gap:12px;padding:10px 16px;background:#fff;
+  border:1px solid #ddd;border-radius:8px;
+}
+.fa-srow label{font-size:13px;color:#555;white-space:nowrap}
+.fa-srow input[type=range]{flex:1}
+.fa-srow span{font-size:13px;font-weight:600;min-width:52px;text-align:right}
+#fa-statusbar{width:100%;max-width:1200px;font-size:13px;color:#666;padding:0 4px}
+
 /* topbar */
 #topbar{display:flex;align-items:center;height:44px;padding:0 16px;border-bottom:1px solid var(--bdr);background:var(--bg);flex-shrink:0}
 #logo{font-family:monospace;font-size:13px;letter-spacing:.12em;margin-right:20px;flex-shrink:0}
@@ -261,6 +303,7 @@ function checkPassword(){
   <button class="tab"        id="tab2" onclick="goPage(2)">② 比較・補正</button>
   <button class="tab"        id="tab3" onclick="goPage(3)">③ 切り取り・貼り付け</button>
   <button class="tab"        id="tab4" onclick="goPage(4)">④ カラーピッカー</button>
+  <button class="tab"        id="tab5" onclick="goPage(5)">👤 顔貌分析</button>
 </div>
 
 <!-- ─── ケースタブバー ─── -->
@@ -469,7 +512,7 @@ function hide(id){$(id).classList.add('hidden');}
 function clamp(v){return Math.max(0,Math.min(255,Math.round(v)));}
 
 function goPage(n){
-  [1,2,3,4].forEach(function(i){$('page'+i).classList.toggle('on',i===n);$('tab'+i).classList.toggle('active',i===n);});
+  [1,2,3,4,5].forEach(function(i){$('page'+i).classList.toggle('on',i===n);$('tab'+i).classList.toggle('active',i===n);});
   if(n===3) syncPage3();
   if(n===4) syncPickerPage();
 }
@@ -1462,5 +1505,380 @@ function startNextRound(){
 }
 
 </script>
+
+<!-- ═══ PAGE 5: 顔貌分析 ═══ -->
+<div class="page" id="page5">
+  <div class="fa-toolbar">
+    <button class="fa-tbtn" id="fa-openBtn">📂 画像を開く</button>
+    <input type="file" id="fa-file-in" accept="image/*" style="display:none">
+    <div class="fa-vsep"></div>
+    <button class="fa-tbtn" id="fa-pupilBtn">① 瞳孔を指定</button>
+    <button class="fa-tbtn" id="fa-midBtn">② 正中線を追加</button>
+    <button class="fa-tbtn" id="fa-midMoveBtn">③ 正中線の移動</button>
+    <button class="fa-tbtn" id="fa-moveBtn">④ 移動線を追加</button>
+    <div class="fa-vsep"></div>
+    <button class="fa-tbtn" id="fa-resetBtn">リセット</button>
+    <div class="fa-vsep"></div>
+    <button class="fa-tbtn green" id="fa-jpgBtn" style="display:none">JPEGで保存</button>
+    <button class="fa-tbtn green" id="fa-pngBtn" style="display:none">PNGで保存</button>
+  </div>
+
+  <div id="fa-main">
+    <div id="fa-dropzone">
+      <div id="fa-hint-box">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+        <span>ここをクリックまたは画像をドロップ</span>
+        <span style="font-size:12px;color:#666;">jpg / png / webp</span>
+      </div>
+      <canvas id="fa-mycanvas"></canvas>
+    </div>
+
+    <div class="fa-srow" id="fa-moveRow">
+      <label>④ 移動線の上下</label>
+      <input type="range" id="fa-moveSl" min="-600" max="600" value="80" step="1">
+      <span id="fa-moveVal">+80 px</span>
+    </div>
+
+    <div class="fa-srow" id="fa-midRow">
+      <label>③ 正中線の左右</label>
+      <input type="range" id="fa-midSl" min="-600" max="600" value="0" step="1">
+      <span id="fa-midVal">0 px</span>
+    </div>
+
+    <div id="fa-statusbar">画像をアップロードして開始してください</div>
+  </div>
+</div>
+
+<script>
+/* ═══ 顔貌分析ツール ═══ */
+(function(){
+  var canvas = document.getElementById('fa-mycanvas');
+  var ctx    = canvas.getContext('2d');
+  var dz     = document.getElementById('fa-dropzone');
+  var hb     = document.getElementById('fa-hint-box');
+  var fin    = document.getElementById('fa-file-in');
+
+  var img       = null;
+  var rotImg    = null;
+  var mode      = 'idle';
+  var pts       = [];
+  var hasMid    = false;
+  var hasMove   = false;
+  var moveDelta = 80;
+  var midDelta  = 0;
+  var rotated   = false;
+
+  var LC   = 'rgba(0,0,0,0.55)';
+  var BLUE = 'rgba(30,130,255,0.92)';
+
+  function faStatus(t){ document.getElementById('fa-statusbar').textContent = t; }
+
+  function loadFile(file){
+    if(!file || !file.type.match(/^image\//)) return;
+    var url = URL.createObjectURL(file);
+    var im  = new Image();
+    im.onload = function(){
+      img = im;
+      rotImg = null;
+      rotated = false;
+      URL.revokeObjectURL(url);
+      hb.style.display = 'none';
+      canvas.style.display = 'block';
+      fitCanvas(img);
+      resetAll(false);
+      drawOriginal();
+      faStatus('画像を読み込みました。「① 瞳孔を指定」を押してください');
+    };
+    im.src = url;
+  }
+
+  function fitCanvas(source){
+    var mw = dz.clientWidth;
+    var mh = Math.floor(window.innerHeight * 0.82);
+    var sc = Math.min(mw / source.width, mh / source.height, 1);
+    canvas.width  = Math.round(source.width  * sc);
+    canvas.height = Math.round(source.height * sc);
+  }
+
+  function drawOriginal(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    if(rotated && rotImg){
+      ctx.drawImage(rotImg, 0, 0, canvas.width, canvas.height);
+    } else if(img){
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  function resetAll(clearImg){
+    pts=[]; hasMid=false; hasMove=false;
+    moveDelta=80; midDelta=0; rotated=false; rotImg=null;
+    document.getElementById('fa-moveSl').value=80;
+    document.getElementById('fa-moveVal').textContent='+80 px';
+    document.getElementById('fa-midSl').value=0;
+    document.getElementById('fa-midVal').textContent='0 px';
+    document.getElementById('fa-moveRow').style.display='none';
+    document.getElementById('fa-midRow').style.display='none';
+    document.getElementById('fa-jpgBtn').style.display='none';
+    document.getElementById('fa-pngBtn').style.display='none';
+    document.getElementById('fa-pupilBtn').classList.remove('on');
+    mode='idle';
+    if(clearImg){
+      img=null;
+      canvas.style.display='none';
+      hb.style.display='flex';
+    }
+  }
+
+  function rotateAndCrop(){
+    var p1=pts[0], p2=pts[1];
+    var sc = img.naturalWidth / canvas.width;
+    var fp1 = { x: p1.x*sc, y: p1.y*sc };
+    var fp2 = { x: p2.x*sc, y: p2.y*sc };
+    var angle = Math.atan2(fp2.y - fp1.y, fp2.x - fp1.x);
+    var IW = img.naturalWidth;
+    var IH = img.naturalHeight;
+    var cosA = Math.abs(Math.cos(angle));
+    var sinA = Math.abs(Math.sin(angle));
+    var RW = Math.round(IW * cosA + IH * sinA);
+    var RH = Math.round(IW * sinA + IH * cosA);
+    var tmp = document.createElement('canvas');
+    tmp.width  = RW;
+    tmp.height = RH;
+    var tc = tmp.getContext('2d');
+    tc.translate(RW/2, RH/2);
+    tc.rotate(-angle);
+    tc.drawImage(img, -IW/2, -IH/2);
+    tc.setTransform(1,0,0,1,0,0);
+    var cx0 = IW/2, cy0 = IH/2;
+    var corners = [
+      {x:0, y:0},{x:IW, y:0},{x:IW, y:IH},{x:0, y:IH}
+    ].map(function(c){
+      var dx=c.x-cx0, dy=c.y-cy0;
+      return {
+        x: RW/2 + dx*Math.cos(-angle) - dy*Math.sin(-angle),
+        y: RH/2 + dx*Math.sin(-angle) + dy*Math.cos(-angle)
+      };
+    });
+    var minX = Math.max(corners[0].x, corners[3].x);
+    var maxX = Math.min(corners[1].x, corners[2].x);
+    var minY = Math.max(corners[0].y, corners[1].y);
+    var maxY = Math.min(corners[2].y, corners[3].y);
+    var eqMarginX = Math.min(minX, RW - maxX);
+    var eqMarginY = Math.min(minY, RH - maxY);
+    var cropX = eqMarginX;
+    var cropY = eqMarginY;
+    var cropW = RW - eqMarginX * 2;
+    var cropH = RH - eqMarginY * 2;
+    var out = document.createElement('canvas');
+    out.width  = cropW;
+    out.height = cropH;
+    var oc = out.getContext('2d');
+    oc.drawImage(tmp, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+    rotImg = out;
+    rotated = true;
+    function transformPt(p){
+      var dx=p.x-cx0, dy=p.y-cy0;
+      var rx = RW/2 + dx*Math.cos(-angle) - dy*Math.sin(-angle);
+      var ry = RH/2 + dx*Math.sin(-angle) + dy*Math.cos(-angle);
+      return { x: rx - cropX, y: ry - cropY };
+    }
+    var np1 = transformPt(fp1);
+    var np2 = transformPt(fp2);
+    fitCanvas({ width: cropW, height: cropH });
+    var dsc = canvas.width / cropW;
+    pts = [
+      { x: np1.x * dsc, y: np1.y * dsc },
+      { x: np2.x * dsc, y: np2.y * dsc }
+    ];
+  }
+
+  function redraw(){
+    drawOriginal();
+    if(pts.length===1){ faDot(pts[0].x, pts[0].y, BLUE); }
+    if(pts.length===2){
+      var p1=pts[0], p2=pts[1];
+      var dx=p2.x-p1.x, dy=p2.y-p1.y;
+      var len=Math.sqrt(dx*dx+dy*dy);
+      var nx=dx/len, ny=dy/len;
+      var px=-ny, py=nx;
+      var ext=Math.max(canvas.width,canvas.height)*2;
+      faLine(p1.x-nx*ext, p1.y-ny*ext, p2.x+nx*ext, p2.y+ny*ext, LC, 1);
+      faDot(p1.x,p1.y,LC); faDot(p2.x,p2.y,LC);
+      if(hasMid){
+        var mx=(p1.x+p2.x)/2 + nx*midDelta;
+        var my=(p1.y+p2.y)/2 + ny*midDelta;
+        faLine(mx-px*ext, my-py*ext, mx+px*ext, my+py*ext, LC, 1);
+      }
+      if(hasMove){
+        var cx=(p1.x+p2.x)/2, cy=(p1.y+p2.y)/2;
+        var ox=cx+px*moveDelta, oy=cy+py*moveDelta;
+        var hl=len/2;
+        var sx=ox-nx*hl, sy=oy-ny*hl, ex=ox+nx*hl, ey=oy+ny*hl;
+        faLine(sx,sy,ex,ey,LC,1);
+        faDot(sx,sy,LC); faDot(ex,ey,LC);
+      }
+    }
+  }
+
+  function faLine(x1,y1,x2,y2,color,w){
+    ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=w; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    ctx.restore();
+  }
+  function faDot(x,y,color){
+    ctx.save(); ctx.fillStyle=color;
+    ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  function cvCoords(e){
+    var r=canvas.getBoundingClientRect();
+    return { x:(e.clientX-r.left)*(canvas.width/r.width),
+             y:(e.clientY-r.top) *(canvas.height/r.height) };
+  }
+
+  canvas.addEventListener('click', function(e){
+    if(mode==='p1'){
+      pts=[cvCoords(e)]; mode='p2'; redraw();
+      faStatus('1点目（青）を打ちました。右瞳孔をクリックしてください');
+    } else if(mode==='p2'){
+      pts.push(cvCoords(e));
+      mode='done';
+      document.getElementById('fa-pupilBtn').classList.remove('on');
+      faStatus('回転・トリミング処理中...');
+      setTimeout(function(){
+        rotateAndCrop();
+        redraw();
+        document.getElementById('fa-jpgBtn').style.display='inline-block';
+        document.getElementById('fa-pngBtn').style.display='inline-block';
+        faStatus('瞳孔線を水平に補正しました。② ③ ④ のボタンを使えます');
+      }, 30);
+    }
+  });
+
+  document.getElementById('fa-openBtn').addEventListener('click', function(){ fin.click(); });
+  fin.addEventListener('change', function(){ if(fin.files[0]) loadFile(fin.files[0]); fin.value=''; });
+  hb.addEventListener('click', function(){ fin.click(); });
+  dz.addEventListener('dragover', function(e){ e.preventDefault(); });
+  dz.addEventListener('drop', function(e){
+    e.preventDefault();
+    var f=e.dataTransfer.files[0]; if(f) loadFile(f);
+  });
+
+  document.getElementById('fa-pupilBtn').addEventListener('click', function(){
+    if(!img){ faStatus('先に画像を開いてください'); return; }
+    rotated=false; rotImg=null; pts=[];
+    hasMid=false; hasMove=false;
+    midDelta=0; moveDelta=80;
+    document.getElementById('fa-moveSl').value=80;
+    document.getElementById('fa-moveVal').textContent='+80 px';
+    document.getElementById('fa-midSl').value=0;
+    document.getElementById('fa-midVal').textContent='0 px';
+    document.getElementById('fa-moveRow').style.display='none';
+    document.getElementById('fa-midRow').style.display='none';
+    document.getElementById('fa-jpgBtn').style.display='none';
+    document.getElementById('fa-pngBtn').style.display='none';
+    fitCanvas(img);
+    mode='p1';
+    drawOriginal();
+    this.classList.add('on');
+    faStatus('左瞳孔をクリックしてください（青い点が打たれます）');
+  });
+
+  document.getElementById('fa-midBtn').addEventListener('click', function(){
+    if(pts.length<2){ faStatus('先に瞳孔を2点指定してください'); return; }
+    hasMid=true; midDelta=0;
+    document.getElementById('fa-midSl').value=0;
+    document.getElementById('fa-midVal').textContent='0 px';
+    redraw(); faStatus('正中線を追加しました');
+  });
+
+  document.getElementById('fa-midMoveBtn').addEventListener('click', function(){
+    if(!hasMid){ faStatus('先に「② 正中線を追加」してください'); return; }
+    document.getElementById('fa-midRow').style.display='flex';
+    faStatus('スライダーで正中線を左右に移動できます');
+  });
+
+  document.getElementById('fa-moveBtn').addEventListener('click', function(){
+    if(pts.length<2){ faStatus('先に瞳孔を2点指定してください'); return; }
+    hasMove=true;
+    document.getElementById('fa-moveRow').style.display='flex';
+    redraw(); faStatus('スライダーで移動線を上下に動かせます');
+  });
+
+  document.getElementById('fa-resetBtn').addEventListener('click', function(){
+    if(img){
+      rotated=false; rotImg=null;
+      fitCanvas(img);
+      drawOriginal();
+    }
+    resetAll(false);
+    faStatus('リセットしました');
+  });
+
+  document.getElementById('fa-moveSl').addEventListener('input', function(){
+    moveDelta=parseInt(this.value);
+    document.getElementById('fa-moveVal').textContent=(moveDelta>=0?'+':'')+moveDelta+' px';
+    redraw();
+  });
+  document.getElementById('fa-midSl').addEventListener('input', function(){
+    midDelta=parseInt(this.value);
+    document.getElementById('fa-midVal').textContent=(midDelta>=0?'+':'')+midDelta+' px';
+    redraw();
+  });
+
+  function exportImg(fmt){
+    if(!rotImg && !img) return;
+    if(pts.length<2) return;
+    var source = rotImg ? rotImg : img;
+    var ec=document.createElement('canvas');
+    ec.width=source.width; ec.height=source.height;
+    var ec2=ec.getContext('2d');
+    var sc = source.width / canvas.width;
+    ec2.drawImage(source,0,0);
+    var p1={x:pts[0].x*sc, y:pts[0].y*sc};
+    var p2={x:pts[1].x*sc, y:pts[1].y*sc};
+    var dx=p2.x-p1.x, dy=p2.y-p1.y;
+    var len=Math.sqrt(dx*dx+dy*dy);
+    var nx=dx/len, ny=dy/len, px=-ny, py=nx;
+    var ext=Math.max(ec.width,ec.height)*2;
+    ec2.strokeStyle=LC; ec2.lineWidth=sc; ec2.setLineDash([]);
+    ec2.beginPath(); ec2.moveTo(p1.x-nx*ext,p1.y-ny*ext); ec2.lineTo(p2.x+nx*ext,p2.y+ny*ext); ec2.stroke();
+    [p1,p2].forEach(function(p){ ec2.fillStyle=LC; ec2.beginPath(); ec2.arc(p.x,p.y,4*sc,0,Math.PI*2); ec2.fill(); });
+    if(hasMid){
+      var mx=(p1.x+p2.x)/2+nx*midDelta*sc;
+      var my=(p1.y+p2.y)/2+ny*midDelta*sc;
+      ec2.beginPath(); ec2.moveTo(mx-px*ext,my-py*ext); ec2.lineTo(mx+px*ext,my+py*ext); ec2.stroke();
+    }
+    if(hasMove){
+      var cx=(p1.x+p2.x)/2, cy=(p1.y+p2.y)/2;
+      var ox=cx+px*moveDelta*sc, oy=cy+py*moveDelta*sc;
+      var hl=len/2;
+      var sx=ox-nx*hl,sy=oy-ny*hl,ex2=ox+nx*hl,ey2=oy+ny*hl;
+      ec2.beginPath(); ec2.moveTo(sx,sy); ec2.lineTo(ex2,ey2); ec2.stroke();
+      [{x:sx,y:sy},{x:ex2,y:ey2}].forEach(function(p){ ec2.fillStyle=LC; ec2.beginPath(); ec2.arc(p.x,p.y,4*sc,0,Math.PI*2); ec2.fill(); });
+    }
+    var mime=fmt==='jpeg'?'image/jpeg':'image/png';
+    var ext2=fmt==='jpeg'?'jpg':'png';
+    var url=ec.toDataURL(mime,0.95);
+    var a=document.createElement('a'); a.href=url; a.download='facial_'+Date.now()+'.'+ext2; a.click();
+  }
+
+  document.getElementById('fa-jpgBtn').addEventListener('click', function(){ exportImg('jpeg'); });
+  document.getElementById('fa-pngBtn').addEventListener('click', function(){ exportImg('png'); });
+
+  window.addEventListener('resize', function(){
+    if(!img) return;
+    var src = (rotated && rotImg) ? rotImg : img;
+    fitCanvas(src);
+    redraw();
+  });
+})();
+</script>
+
 </body>
 </html>
