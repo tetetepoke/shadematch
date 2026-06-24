@@ -65,19 +65,18 @@ body{background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;heigh
 
 /* ── 写真追加ページ ── */
 #page1{overflow:auto}
-.photo-cols{display:grid;grid-template-columns:1fr 1fr;gap:0;flex:1;overflow:hidden}
-.photo-col{padding:13px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;border-right:1px solid var(--bdr)}
+.photo-cols{display:grid;grid-template-columns:1fr 1fr;gap:0;flex:1;overflow:auto}
+.photo-col{padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;border-right:1px solid var(--bdr)}
 .photo-col:last-child{border-right:none}
 /* 写真プレビューを同じ高さに統一 */
 .photo-preview{
   position:relative;background:#080706;border-radius:6px;
-  border:1px solid var(--bdr);overflow:hidden;flex-shrink:0;
-  height:260px;display:flex;align-items:center;justify-content:center;
-  line-height:0;
+  border:1px solid var(--bdr);overflow:hidden;
+  line-height:0;flex-shrink:0;
 }
-.photo-preview canvas{width:100%;height:auto;
-  max-width:100%;max-height:260px;
-  object-fit:contain;display:block;cursor:crosshair;
+.photo-preview canvas{
+  display:block;width:100%;height:auto;
+  cursor:crosshair;
 }
 .photo-preview-hint{
   font-size:10px;color:var(--fgm);text-align:center;
@@ -117,8 +116,8 @@ body{background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;heigh
 .sn{font-family:monospace;font-size:9px;color:var(--ac);background:var(--acdim);border:1px solid var(--acbdr);border-radius:4px;padding:2px 6px;white-space:nowrap;margin-top:1px;flex-shrink:0}
 .st{font-size:13px;font-weight:600}.ss{font-size:10px;color:var(--fgm);margin-top:2px;line-height:1.5}
 /* upload */
-.uz{border:1.5px dashed var(--bdr2);border-radius:7px;min-height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;background:var(--surf);position:relative;overflow:hidden;transition:border-color .15s;flex-shrink:0}
-.uz:hover{border-color:var(--ac)}.uz.has{border-style:solid;border-color:var(--bdr2);cursor:default}
+.uz{border:1.5px dashed var(--bdr2);border-radius:7px;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;background:var(--surf);position:relative;overflow:hidden;transition:border-color .15s;flex-shrink:0}
+.uz:hover{border-color:var(--ac)}.uz.has{border-style:solid;border-color:var(--bdr2);cursor:default;height:0;min-height:0;padding:0;border:none;overflow:hidden}
 .uz input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}.uz.has input{display:none}
 .uh{font-size:10px;color:var(--fgm);text-align:center;line-height:1.6;pointer-events:none}
 /* ① canvas: display canvas separate from data canvas */
@@ -373,7 +372,7 @@ function checkPassword(){
         <span class="photo-preview-hint" id="ch1">写真を追加すると表示されます</span>
       </div>
       <!-- 調整スライダー -->
-      <div class="bx"><div class="bh"><span class="bt">明度・色調整</span></div><div class="bb" id="adj1box"></div></div>
+      <details style="flex-shrink:0"><summary style="font-family:monospace;font-size:10px;color:var(--fgm);padding:6px 10px;cursor:pointer;background:var(--surf);border:1px solid var(--bdr);border-radius:7px;list-style:none;display:flex;align-items:center;gap:6px">▶ 明度・色調整</summary><div class="bx" style="border-top:none;border-radius:0 0 7px 7px"><div class="bb" id="adj1box"></div></div></details>
       <!-- ドラッグ選択ボタン -->
       <div class="brow">
         <button class="btn btn-o" id="bcrop1" disabled onclick="confirmCrop(1)">比較領域を確定</button>
@@ -428,16 +427,37 @@ function checkPassword(){
   <canvas id="p2cpv1" style="display:none"></canvas>
   <canvas id="p2cpv2" style="display:none"></canvas>
 
-  <!-- ── 比較エリア（上） ── -->
-  <!-- ラベル行 -->
-  <div style="display:flex;flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--bdr)">
-    <div id="cmpLabelL" style="text-align:center;padding:4px;font-family:monospace;font-size:10px;color:var(--fgd);border-right:1px solid var(--bdr)">クリニック</div>
-    <div id="cmpLabelR" style="text-align:center;padding:4px;font-family:monospace;font-size:10px;color:var(--fgd)">手元（補正後）</div>
-  </div>
-  <!-- 画像エリア: 2枚を同じ高さで横に並べる -->
-  <div id="cmpArea" style="flex:1;overflow:hidden;min-height:0;background:#080706;display:flex;align-items:center;justify-content:center">
-    <canvas id="cmpL" style="display:block;cursor:crosshair;flex-shrink:0"></canvas>
-    <canvas id="cmpR" style="display:block;cursor:crosshair;flex-shrink:0;border-left:1px solid rgba(255,255,255,0.1)"></canvas>
+  <!-- ── メインエリア: 左=元画像, 中=選択領域比較, 右=補正後 ── -->
+  <div style="flex:1;display:flex;overflow:hidden;min-height:0">
+
+    <!-- 左列: 手元元画像 -->
+    <div style="width:22%;background:#080706;display:flex;flex-direction:column;border-right:1px solid var(--bdr);min-width:0">
+      <div style="font-family:monospace;font-size:9px;color:var(--fgd);text-align:center;padding:4px;background:var(--surf);border-bottom:1px solid var(--bdr);flex-shrink:0">元画像（手元）</div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:4px;min-height:0">
+        <canvas id="cvPreviewRaw" style="max-width:100%;max-height:100%;display:block"></canvas>
+      </div>
+    </div>
+
+    <!-- 中央: 選択領域の比較 -->
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+      <div style="display:flex;flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--bdr)">
+        <div id="cmpLabelL" style="text-align:center;padding:4px;font-family:monospace;font-size:10px;color:var(--fgd);border-right:1px solid var(--bdr)">クリニック</div>
+        <div id="cmpLabelR" style="text-align:center;padding:4px;font-family:monospace;font-size:10px;color:var(--fgd)">手元（補正後）</div>
+      </div>
+      <div id="cmpArea" style="flex:1;overflow:hidden;min-height:0;background:#080706;display:flex;align-items:center;justify-content:center">
+        <canvas id="cmpL" style="display:block;cursor:crosshair;flex-shrink:0"></canvas>
+        <canvas id="cmpR" style="display:block;cursor:crosshair;flex-shrink:0;border-left:1px solid rgba(255,255,255,0.1)"></canvas>
+      </div>
+    </div>
+
+    <!-- 右列: 補正後プレビュー -->
+    <div style="width:22%;background:#080706;display:flex;flex-direction:column;border-left:1px solid var(--bdr);min-width:0">
+      <div style="font-family:monospace;font-size:9px;color:var(--fgd);text-align:center;padding:4px;background:var(--surf);border-bottom:1px solid var(--bdr);flex-shrink:0">補正後</div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:4px;min-height:0">
+        <canvas id="cvPreviewCorr" style="max-width:100%;max-height:100%;display:block"></canvas>
+      </div>
+    </div>
+
   </div>
 
   <!-- ── コントロール（下） ── -->
@@ -447,6 +467,8 @@ function checkPassword(){
       <span style="font-size:10px;color:var(--fgm)">選択領域間 ΔE</span>
       <span class="dv" id="deltaDE">—</span>
       <button class="btn btn-o" id="btnGray" onclick="toggleGrayscale()" style="margin-left:auto">グレースケール</button>
+      <button class="btn btn-g" id="btnFix" onclick="fixCorrection()" style="font-weight:700">✔ 確定</button>
+      <button class="btn btn-o" id="btnUnfix" onclick="unfixCorrection()" style="display:none">🔓 解除</button>
       <button class="btn btn-o" id="btnNewPhoto2b" onclick="loadNewTechPhoto()">📷 手元写真を切り替え</button>
     </div>
     <!-- スライダー横並び -->
@@ -576,6 +598,7 @@ var S={
   adjC:{L:0,K:0,S:0,T:0,G:0},
   adjLab:{L:0,a:0,b:0},
   grayscale:false,
+  corrFixed:false, corrDataFixed:null,
   crop1:null, crop2:null, crop1Data:null, crop2Data:null,
   corrData:null, cutRect:null, cutData:null,
   pasteList:[], selIdx:-1,
@@ -632,7 +655,7 @@ function clamp(v){return Math.max(0,Math.min(255,Math.round(v)));}
 
 function goPage(n){
   [1,2,3,4,5].forEach(function(i){$('page'+i).classList.toggle('on',i===n);$('tab'+i).classList.toggle('active',i===n);});
-  if(n===2) setTimeout(function(){ updateCompare(); },30);
+  if(n===2) setTimeout(function(){ updateCompare(); drawSidePreviews(); },30);
   if(n===3) syncPage3();
   if(n===4) syncPickerPage();
 }
@@ -660,6 +683,8 @@ function adjustData(src,adj){
 }
 
 /* rebuild cache1 when img1 or adj1 changes */
+/* デバウンスタイマー */
+var _rb1Timer=null, _rb2Timer=null;
 function rebuildCache1(){
   if(!S.img1) return;
   var raw=imgToData(S.img1);
@@ -669,11 +694,15 @@ function rebuildCache1(){
 /* rebuild cache2 when img2 or adjC changes */
 function rebuildCache2(){
   if(!S.img2) return;
-  S.cache2raw=imgToData(S.img2);
+  /* img2はキャッシュを使い回す：画像が変わった時だけ再取得 */
+  if(!S.cache2raw) S.cache2raw=imgToData(S.img2);
   var adj=adjustData(S.cache2raw,S.adjC);
   S.cache2adj=applyLabAdj(adj);
-  S.corrData=S.cache2adj;
+  /* corrDataはapplyCorr()に任せる — ここで直接代入するとグレースケール状態が失われる */
 }
+/* スライダー操作用デバウンス版（30ms待機） */
+function rebuildCache1D(){ clearTimeout(_rb1Timer); _rb1Timer=setTimeout(function(){rebuildCache1();drawC1();},30); }
+function rebuildCache2D(){ clearTimeout(_rb2Timer); _rb2Timer=setTimeout(function(){rebuildCache2();applyCorr();},30); }
 
 /* ① draw from cache — NO heavy computation on drag */
 function drawC1(){
@@ -686,8 +715,12 @@ function drawC1(){
 }
 function drawC2(){
   var cv=$('cv2'); if(!S.img2) return;
-  cv.width=S.img2.naturalWidth; cv.height=S.img2.naturalHeight;
-  cv.getContext('2d').drawImage(S.img2,0,0);
+  if(!S.cache2raw) S.cache2raw=imgToData(S.img2);
+  /* 補正済みデータがあればそれを使う、なければ生データ */
+  var base=S.cache2adj||S.cache2raw;
+  var data2=S.grayscale?toGrayscaleData(base):base;
+  cv.width=data2.width; cv.height=data2.height;
+  cv.getContext('2d').putImageData(data2,0,0);
   drawSel(cv,S.drag.who==='c2'?S.drag:null, S.crop2);
   var h2=$('ch2');if(h2)h2.style.display='none';
 }
@@ -747,7 +780,10 @@ function setupDrag(cvId,who){
   var cv=$(cvId),dirty=false;
   function pos(e){
     var r=cv.getBoundingClientRect(),src=(e.touches?e.touches[0]:e);
-    return{x:(src.clientX-r.left)*cv.width/r.width, y:(src.clientY-r.top)*cv.height/r.height};
+    /* canvas内部解像度 vs CSS表示サイズの正確な変換（余白なし・object-fit:none前提） */
+    var cx=Math.max(0,Math.min(r.width, src.clientX-r.left));
+    var cy=Math.max(0,Math.min(r.height,src.clientY-r.top));
+    return{x:cx*cv.width/r.width, y:cy*cv.height/r.height};
   }
   function md(e){var p=pos(e);S.drag={on:true,sx:p.x,sy:p.y,ex:p.x,ey:p.y,who:who};e.preventDefault();}
   function mm(e){
@@ -780,7 +816,7 @@ function setupDrag(cvId,who){
 }
 
 /* ═══ PAGE 1 ═══ */
-buildSliders('adj1box','a1',S.adj1,function(){rebuildCache1();drawC1();});
+buildSliders('adj1box','a1',S.adj1,function(){rebuildCache1D();});
 
 $('f1').addEventListener('change',function(e){
   var file=e.target.files[0];if(!file)return;
@@ -808,6 +844,7 @@ function confirmCrop(n){
   }else{
     if(!S.crop2||!S.img2)return;
     /* cv2には選択線が描かれているのでcache2rawから直接切り出す */
+    if(!S.cache2raw) S.cache2raw=imgToData(S.img2);
     var wc2=$('wc');
     wc2.width=S.cache2raw.width; wc2.height=S.cache2raw.height;
     wc2.getContext('2d').putImageData(S.cache2raw,0,0);
@@ -822,7 +859,7 @@ function clearCrop(n){
 }
 
 /* ═══ PAGE 2 ═══ */
-buildSliders('corrbox','c',S.adjC,function(){rebuildCache2();applyCorr();});
+buildSliders('corrbox','c',S.adjC,function(){rebuildCache2D();});
 
 $('f2').addEventListener('change',function(e){
   var file=e.target.files[0];if(!file)return;
@@ -831,7 +868,8 @@ $('f2').addEventListener('change',function(e){
     S.img2=img;$('uico2').style.display='none';$('uhi2').style.display='none';
     $('uz2').classList.add('has');$('ch2').textContent='ドラッグして比較領域を選択してください';
     S.crop2=null;S.crop2Data=null;hide('cprev2');$('bcrop2').disabled=true;$('bclr2').disabled=true;
-    rebuildCache2();drawC2();setupDrag('cv2','c2');applyCorr();
+    S.cache2raw=null; /* 新しい画像のため強制再取得 */
+    rebuildCache2();drawC2();setupDrag('cv2','c2');applyCorr();drawSidePreviewRaw();
   };
   img.src=URL.createObjectURL(file);
 });
@@ -839,10 +877,20 @@ $('f2').addEventListener('change',function(e){
 var STRIP_H=130;
 function applyCorr(){
   if(!S.img2)return;
+  /* 確定済みの場合はグレースケール切り替えのみ反映 */
+  if(S.corrFixed && S.corrDataFixed){
+    S.corrData = S.grayscale ? toGrayscaleData(S.corrDataFixed) : S.corrDataFixed;
+    _corrCropCorrRef=null; _cmpRCorrRef=null;
+    updateCorrCompare(S.corrData);
+    return;
+  }
   var base=S.cache2adj||S.cache2raw;
   if(!base)return;
   S.corrData=S.grayscale?toGrayscaleData(base):base;
+  /* corrDataが変わったのでgetImageDataキャッシュを無効化 */
+  _corrCropCorrRef=null; _cmpRCorrRef=null;
   updateCorrCompare(S.corrData);
+  drawSidePreviews();
 }
 
 function drawStrip(canvas,data){
@@ -913,23 +961,42 @@ function drawSyncPair(dataL, dataR){
   if(lR) lR.style.width = (wR||0)+'px';
 }
 
-function updateCompare(){
-  var c1=(S.grayscale&&S.crop1Data)?toGrayscaleData(S.crop1Data):S.crop1Data;
-  var c2=(S.grayscale&&S.crop2Data)?toGrayscaleData(S.crop2Data):S.crop2Data;
-  drawSyncPair(c1, c2);
-  recalcDE();
-}
-function updateCorrCompare(corrFull){
-  if(!S.crop2||!corrFull)return;
+var _corrCropCache=null, _corrCropCorrRef=null, _corrCropCropRef=null;
+function _getCorrCrop(corrFull){
+  if(!S.crop2||!corrFull) return null;
+  if(corrFull===_corrCropCorrRef && S.crop2===_corrCropCropRef) return _corrCropCache;
   var wc=$('wc');wc.width=corrFull.width;wc.height=corrFull.height;wc.getContext('2d').putImageData(corrFull,0,0);
   var c=S.crop2,cx=Math.min(c.x,corrFull.width-1),cy=Math.min(c.y,corrFull.height-1);
   var cw=Math.min(c.w,corrFull.width-cx),ch=Math.min(c.h,corrFull.height-cy);
-  if(cw<1||ch<1)return;
-  var cc=wc.getContext('2d').getImageData(cx,cy,cw,ch);
-  var c1disp=(S.grayscale&&S.crop1Data)?toGrayscaleData(S.crop1Data):S.crop1Data;
-  var c2disp=S.grayscale?toGrayscaleData(cc):cc;
-  drawSyncPair(c1disp, c2disp);
-  if(S.crop1Data){var de=deltaE(S.crop1Data,cc);var dv=$('deltaDE');dv.textContent=de.toFixed(1);dv.className='dv '+deClass(de);}
+  if(cw<1||ch<1){_corrCropCache=null;}
+  else{_corrCropCache=wc.getContext('2d').getImageData(cx,cy,cw,ch);}
+  _corrCropCorrRef=corrFull; _corrCropCropRef=S.crop2;
+  return _corrCropCache;
+}
+
+function updateCompare(){
+  /* 左: クリニック写真（crop1Data）をグレースケールのみ適用 */
+  var rawL = S.crop1Data
+             ? (S.grayscale ? toGrayscaleData(S.crop1Data) : S.crop1Data)
+             : null;
+  /* 右: corrDataからcrop2領域を切り出し（手元補正後） */
+  var corrR = null;
+  if(S.corrData && S.crop2){
+    var cc = _getCorrCrop(S.corrData);
+    if(cc) corrR = S.grayscale ? toGrayscaleData(cc) : cc;
+  }
+  drawSyncPair(rawL, corrR);
+  /* ΔE: クリニックと補正後の差 */
+  if(rawL && corrR){
+    var de=deltaE(rawL, corrR);
+    var dv=$('deltaDE'); dv.textContent=de.toFixed(1); dv.className='dv '+deClass(de);
+  } else {
+    $('deltaDE').textContent='—'; $('deltaDE').className='dv';
+  }
+}
+function updateCorrCompare(corrFull){
+  /* corrFullが更新されたら比較を再描画 */
+  updateCompare();
 }
 function recalcDE(){
   if(!S.crop1Data||!S.crop2Data){$('deltaDE').textContent='—';$('deltaDE').className='dv';return;}
@@ -1539,11 +1606,65 @@ function dlPickResults(){
 
 
 /* ── グレースケール ── */
+
+
+/* ── サイドプレビュー: 左=手元元画像, 右=補正後フル ── */
+function drawSidePreviewRaw(){
+  var cv = document.getElementById('cvPreviewRaw');
+  if(!cv) return;
+  if(!S.img2){ cv.width=1; cv.height=1; return; }
+  if(!S.cache2raw) S.cache2raw = imgToData(S.img2);
+  var data = S.grayscale ? toGrayscaleData(S.cache2raw) : S.cache2raw;
+  cv.width = data.width; cv.height = data.height;
+  cv.getContext('2d').putImageData(data, 0, 0);
+}
+function drawSidePreviewCorr(){
+  var cv = document.getElementById('cvPreviewCorr');
+  if(!cv) return;
+  var base = S.corrFixed && S.corrDataFixed ? S.corrDataFixed
+           : (S.cache2adj || S.cache2raw);
+  if(!base){ cv.width=1; cv.height=1; return; }
+  var data = S.grayscale ? toGrayscaleData(base) : base;
+  cv.width = data.width; cv.height = data.height;
+  cv.getContext('2d').putImageData(data, 0, 0);
+}
+function drawSidePreviews(){
+  drawSidePreviewRaw();
+  drawSidePreviewCorr();
+}
+/* ── 確定 / 解除 ── */
+function fixCorrection(){
+  if(!S.cache2adj && !S.cache2raw){ alert('先に手元写真を補正してください'); return; }
+  S.corrFixed = true;
+  /* スライダー類を無効化 */
+  var sliders = document.querySelectorAll('#corrbox input, #corrbox button, #labbox input, #labbox button');
+  sliders.forEach(function(el){ el.disabled = true; });
+  var fb=$('btnFix'); if(fb) fb.style.display='none';
+  var ub=$('btnUnfix'); if(ub) ub.style.display='';
+  /* 確定時点の補正データを固定コピーとして保存 */
+  var base = S.cache2adj || S.cache2raw;
+  S.corrDataFixed = S.grayscale ? toGrayscaleData(base) : base;
+  drawSidePreviewCorr();
+}
+function unfixCorrection(){
+  S.corrFixed = false;
+  S.corrDataFixed = null;
+  var sliders = document.querySelectorAll('#corrbox input, #corrbox button, #labbox input, #labbox button');
+  sliders.forEach(function(el){ el.disabled = false; });
+  var fb=$('btnFix'); if(fb) fb.style.display='';
+  var ub=$('btnUnfix'); if(ub) ub.style.display='none';
+  drawSidePreviewCorr();
+}
+
 function toggleGrayscale(){
   S.grayscale = !S.grayscale;
   var btn=$('btnGray');
   if(btn) btn.textContent = S.grayscale ? 'カラー' : 'グレースケール';
-  rebuildCache1(); drawC1(); applyCorr(); updateCompare();
+  /* cache2adjが確実に存在するようにrebuildしてからdraw */
+  rebuildCache1(); rebuildCache2();
+  drawC1(); drawC2();
+  applyCorr(); updateCompare();
+  drawSidePreviews();
 }
 function toGrayscaleData(data){
   var d=new Uint8ClampedArray(data.data);
@@ -1575,7 +1696,7 @@ function buildLabSliders(){
     $('lab'+s.k).addEventListener('input',function(){
       var v=+this.value; S.adjLab[s.k]=v;
       $('vlab'+s.k).textContent=(v>0?'+':'')+v;
-      rebuildCache2(); applyCorr();
+      rebuildCache2D();
     });
   });
   box.querySelectorAll('.pm').forEach(function(btn){
@@ -1586,7 +1707,7 @@ function buildLabSliders(){
       var nv=Math.max(sl.min,Math.min(sl.max,S.adjLab[k]+d));
       S.adjLab[k]=nv;$('lab'+k).value=nv;
       $('vlab'+k).textContent=(nv>0?'+':'')+nv;
-      rebuildCache2();applyCorr();
+      rebuildCache2D();
     }
     function stop(){clearInterval(t);}
     btn.addEventListener('mousedown',function(e){e.preventDefault();step();t=setInterval(step,70);});
@@ -1601,30 +1722,48 @@ function buildLabSliders(){
   };
   box.appendChild(rb);
 }
+/* ── Lab高速化: ルックアップテーブル ── */
+var _linLUT=null, _gamLUT=null;
+function _buildLUTs(){
+  if(_linLUT) return;
+  _linLUT=new Float32Array(256);
+  _gamLUT=new Float32Array(4096); /* 0〜1を4096段階 */
+  for(var i=0;i<256;i++){
+    var v=i/255;
+    _linLUT[i]=v>0.04045?Math.pow((v+0.055)/1.055,2.4):v/12.92;
+  }
+  for(var j=0;j<4096;j++){
+    var u=j/4095;
+    _gamLUT[j]=u>0.0031308?1.055*Math.pow(u,1/2.4)-0.055:12.92*u;
+  }
+}
+function _lin(v){return _linLUT[v];}
+function _labF(t){return t>0.008856?Math.cbrt(t):(7.787*t+16/116);}
+function _labFi(t){return t>0.20689?t*t*t:(t-16/116)/7.787;}
+function _gam(v){
+  if(v<=0) return 0;
+  if(v>=1) return 255;
+  return Math.round(_gamLUT[Math.round(v*4095)]*255);
+}
 function applyLabAdj(data){
   var adj=S.adjLab;
   if(adj.L===0&&adj.a===0&&adj.b===0) return data;
+  _buildLUTs();
   var d=new Uint8ClampedArray(data.data);
+  var dL=adj.L, da=adj.a, db=adj.b;
   for(var i=0;i<d.length;i+=4){
-    var r=d[i]/255,g=d[i+1]/255,b=d[i+2]/255;
-    function lin(v){return v>0.04045?Math.pow((v+0.055)/1.055,2.4):v/12.92;}
-    var rl=lin(r),gl=lin(g),bl=lin(b);
+    var rl=_lin(d[i]),gl=_lin(d[i+1]),bl=_lin(d[i+2]);
     var X=(rl*0.4124564+gl*0.3575761+bl*0.1804375)/0.95047;
-    var Y=(rl*0.2126729+gl*0.7151522+bl*0.0721750)/1.00000;
+    var Y=(rl*0.2126729+gl*0.7151522+bl*0.0721750);
     var Z=(rl*0.0193339+gl*0.1191920+bl*0.9503041)/1.08883;
-    function f(t){return t>0.008856?Math.cbrt(t):(7.787*t+16/116);}
-    var fx=f(X),fy=f(Y),fz=f(Z);
-    var L=116*fy-16+adj.L, a=500*(fx-fy)+adj.a, bv=200*(fy-fz)+adj.b;
-    var fy2=(L+16)/116,fx2=a/500+fy2,fz2=fy2-bv/200;
-    function fi(t){return t>0.20689?t*t*t:(t-16/116)/7.787;}
-    var X2=fi(fx2)*0.95047,Y2=fi(fy2),Z2=fi(fz2)*1.08883;
+    var fx=_labF(X),fy=_labF(Y),fz=_labF(Z);
+    var L2=116*fy-16+dL, a2=500*(fx-fy)+da, bv=200*(fy-fz)+db;
+    var fy2=(L2+16)/116,fx2=a2/500+fy2,fz2=fy2-bv/200;
+    var X2=_labFi(fx2)*0.95047,Y2=_labFi(fy2),Z2=_labFi(fz2)*1.08883;
     var rl2=X2*3.2404542+Y2*-1.5371385+Z2*-0.4985314;
     var gl2=X2*-0.9692660+Y2*1.8760108+Z2*0.0415560;
     var bl2=X2*0.0556434+Y2*-0.2040259+Z2*1.0572252;
-    function gam(v){v=Math.max(0,v);return v>0.0031308?1.055*Math.pow(v,1/2.4)-0.055:12.92*v;}
-    d[i]=Math.max(0,Math.min(255,Math.round(gam(rl2)*255)));
-    d[i+1]=Math.max(0,Math.min(255,Math.round(gam(gl2)*255)));
-    d[i+2]=Math.max(0,Math.min(255,Math.round(gam(bl2)*255)));
+    d[i]=_gam(rl2); d[i+1]=_gam(gl2); d[i+2]=_gam(bl2);
   }
   return new ImageData(d,data.width,data.height);
 }
@@ -1647,13 +1786,21 @@ function initP2HoverPicker(){
       var py=Math.max(0,Math.min(data.height-1,Math.round(ey*data.height/r.height)));
       var idx=(py*data.width+px)*4;
       var rr=data.data[idx],gg=data.data[idx+1],bb=data.data[idx+2];
-      var lab=rgbToLab(rr,gg,bb);
-      var hex=toHex(rr,gg,bb);
+      /* グレースケール表示中はRGB→輝度換算でL*のみ、a*b*は0 */
+      var lab, hex;
+      if(S.grayscale){
+        var gv=Math.round(rr*0.299+gg*0.587+bb*0.114);
+        lab=rgbToLab(gv,gv,gv);
+        hex=toHex(gv,gv,gv);
+      } else {
+        lab=rgbToLab(rr,gg,bb);
+        hex=toHex(rr,gg,bb);
+      }
       sw.style.background=hex;
       hexEl.textContent=hex.toUpperCase();
       lEl.textContent='L* '+lab.L.toFixed(1);
-      aEl.textContent='a* '+(lab.a>=0?'+':'')+lab.a.toFixed(1);
-      bEl.textContent='b* '+(lab.b>=0?'+':'')+lab.b.toFixed(1);
+      aEl.textContent='a* '+(S.grayscale?'0.0':((lab.a>=0?'+':'')+lab.a.toFixed(1)));
+      bEl.textContent='b* '+(S.grayscale?'0.0':((lab.b>=0?'+':'')+lab.b.toFixed(1)));
       var tx=e.clientX+18, ty=e.clientY-20;
       if(tx+130>window.innerWidth) tx=e.clientX-148;
       tip.style.left=tx+'px'; tip.style.top=ty+'px';
@@ -1662,19 +1809,25 @@ function initP2HoverPicker(){
     cv.addEventListener('mouseleave',function(){ tip.style.display='none'; });
   }
 
-  /* ②クリニック: crop1Dataを直接使用 */
+  /* 左: クリニック写真 */
   attach('cmpL',function(){ return S.crop1Data||null; });
 
-  /* ③手元補正後: corrDataのcrop2部分 */
+  /* ③手元補正後: corrDataのcrop2部分 — キャッシュして毎フレームgetImageDataを避ける */
+  var _cmpRCache=null, _cmpRCorrRef=null, _cmpRCropRef=null;
   attach('cmpR',function(){
     if(!S.crop2||!S.corrData) return null;
-    var c=S.crop2;
-    var wc=$('wc'); wc.width=S.corrData.width; wc.height=S.corrData.height;
-    wc.getContext('2d').putImageData(S.corrData,0,0);
-    var cx=Math.min(c.x,S.corrData.width-1),cy=Math.min(c.y,S.corrData.height-1);
-    var cw=Math.min(c.w,S.corrData.width-cx),ch=Math.min(c.h,S.corrData.height-cy);
-    if(cw<1||ch<1) return null;
-    return wc.getContext('2d').getImageData(cx,cy,cw,ch);
+    /* corrDataかcrop2が変わった時だけ再取得 */
+    if(S.corrData!==_cmpRCorrRef || S.crop2!==_cmpRCropRef){
+      var c=S.crop2;
+      var wc=$('wc'); wc.width=S.corrData.width; wc.height=S.corrData.height;
+      wc.getContext('2d').putImageData(S.corrData,0,0);
+      var cx=Math.min(c.x,S.corrData.width-1),cy=Math.min(c.y,S.corrData.height-1);
+      var cw=Math.min(c.w,S.corrData.width-cx),ch=Math.min(c.h,S.corrData.height-cy);
+      if(cw<1||ch<1){_cmpRCache=null;}
+      else{_cmpRCache=wc.getContext('2d').getImageData(cx,cy,cw,ch);}
+      _cmpRCorrRef=S.corrData; _cmpRCropRef=S.crop2;
+    }
+    return _cmpRCache;
   });
 }
 
@@ -1968,6 +2121,8 @@ function loadNewTechPhoto(){
   /* img2・補正関連をクリア。クリニック写真(img1)・貼り付け結果はそのまま */
   S.img2=null; S.cache2raw=null; S.cache2adj=null; S.corrData=null;
   S.crop2=null; S.crop2Data=null;
+  /* 確定状態もリセット */
+  if(S.corrFixed) unfixCorrection();
   /* スライダーをリセット（S.adjCオブジェクト自体は差し替えない — クロージャが参照しているため） */
   SLD.forEach(function(s){
     S.adjC[s.k]=0;                                 /* プロパティだけゼロに */
