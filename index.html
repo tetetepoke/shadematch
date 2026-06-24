@@ -57,6 +57,48 @@ body{background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;heigh
 .fa-srow span{font-size:13px;font-weight:600;min-width:52px;text-align:right}
 #fa-statusbar{width:100%;max-width:1200px;font-size:13px;color:#666;padding:0 4px}
 
+
+/* ── PAGE3 全画面貼り付け ── */
+#p3viewPaste canvas, #p3viewPick canvas { cursor: crosshair; }
+
+
+
+/* ── 写真追加ページ ── */
+#page1{overflow:auto}
+.photo-cols{display:grid;grid-template-columns:1fr 1fr;gap:0;flex:1;overflow:hidden}
+.photo-col{padding:13px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;border-right:1px solid var(--bdr)}
+.photo-col:last-child{border-right:none}
+/* 写真プレビューを同じ高さに統一 */
+.photo-preview{
+  position:relative;background:#080706;border-radius:6px;
+  border:1px solid var(--bdr);overflow:hidden;flex-shrink:0;
+  height:260px;display:flex;align-items:center;justify-content:center;
+  line-height:0;
+}
+.photo-preview canvas{width:100%;height:auto;
+  max-width:100%;max-height:260px;
+  object-fit:contain;display:block;cursor:crosshair;
+}
+.photo-preview-hint{
+  font-size:10px;color:var(--fgm);text-align:center;
+  position:absolute;pointer-events:none;
+}
+/* 切り取りプレビュー（正方形） */
+.crop-thumb{
+  width:100%;aspect-ratio:1;background:#080706;
+  border:1px solid var(--bdr);border-radius:6px;
+  overflow:hidden;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;line-height:0;
+}
+.crop-thumb canvas{max-width:100%;max-height:100%;object-fit:contain}
+
+/* Lab調整スライダー */
+.lab-box{background:var(--surf);border:1px solid var(--acbdr);border-radius:7px;overflow:hidden;flex-shrink:0;margin-top:4px}
+.lab-badge{font-size:9px;font-family:monospace;color:var(--ac);background:var(--acdim);border:1px solid var(--acbdr);border-radius:3px;padding:1px 5px;margin-left:6px}
+/* L*a*b* ホバーツールチップ */
+#p2labTooltip{position:fixed;z-index:9999;background:#1A1916;border:1px solid var(--acbdr);border-radius:7px;padding:8px 12px;font-family:monospace;font-size:11px;pointer-events:none;line-height:1.8;display:none;min-width:120px}
+#p2labSwatch{width:28px;height:28px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);margin-bottom:6px}
+
 /* topbar */
 #topbar{display:flex;align-items:center;height:44px;padding:0 16px;border-bottom:1px solid var(--bdr);background:var(--bg);flex-shrink:0}
 #logo{font-family:monospace;font-size:13px;letter-spacing:.12em;margin-right:20px;flex-shrink:0}
@@ -300,7 +342,7 @@ function checkPassword(){
 <div id="topbar">
   <img src="data:image/jpeg;base64,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" alt="rch logo" style="height:32px;width:32px;object-fit:contain;border-radius:6px;margin-right:8px;flex-shrink:0;">
   <div id="logo">Dental<span>Shade</span></div>
-  <button class="tab active" id="tab1" onclick="goPage(1)">① クリニック写真</button>
+  <button class="tab active" id="tab1" onclick="goPage(1)">① 写真追加</button>
   <button class="tab"        id="tab2" onclick="goPage(2)">② 比較・補正</button>
   <button class="tab"        id="tab3" onclick="goPage(3)">③ 切り取り・貼り付け</button>
   <button class="tab"        id="tab4" onclick="goPage(4)">④ カラーピッカー</button>
@@ -316,77 +358,142 @@ function checkPassword(){
 
 <!-- ═══ PAGE 1 ═══ -->
 <div class="page on" id="page1">
-  <div class="cols2">
-    <div class="col">
-      <div class="sh"><div class="sn">STEP 01</div><div><div class="st">クリニック写真をアップロード</div><div class="ss">シェードガイドをあてがった口腔内写真</div></div></div>
-      <div class="uz" id="uz1">
+  <div class="photo-cols">
+    <!-- ── 左: クリニック写真 ── -->
+    <div class="photo-col">
+      <div class="sh"><div class="sn">① クリニック</div><div><div class="st">クリニック写真</div><div class="ss">シェードガイドをあてがった口腔内写真</div></div></div>
+      <div class="uz" id="uz1" style="flex-shrink:0">
         <input type="file" id="f1" accept="image/*">
         <svg id="uico1" width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="1" y="1" width="26" height="26" rx="5" stroke="rgba(240,235,227,0.2)" stroke-width="1.3"/><path d="M14 7v14M7 14l7-7 7 7" stroke="rgba(240,235,227,0.25)" stroke-width="1.3" stroke-linecap="round"/></svg>
-        <div class="uh" id="uhi1">クリニック写真をアップロード<br><small style="font-size:9px;opacity:.55">JPG / PNG / WEBP</small></div>
+        <div class="uh" id="uhi1">写真を追加<br><small style="font-size:9px;opacity:.55">JPG / PNG / WEBP</small></div>
       </div>
-      <div class="bx"><div class="bh"><span class="bt">手動調整①</span></div><div class="bb" id="adj1box"></div></div>
-    </div>
-    <div class="col">
-      <div class="sh"><div class="sn">STEP 02</div><div><div class="st">プレビュー・領域選択②</div><div class="ss">ドラッグで比較したい領域を選択</div></div></div>
-      <div class="cw" id="cw1"><canvas id="cv1"></canvas></div>
-      <div class="chint" id="ch1">← 写真をアップロードすると表示されます</div>
+      <!-- プレビュー（統一サイズ） -->
+      <div class="photo-preview" id="pp1">
+        <canvas id="cv1"></canvas>
+        <span class="photo-preview-hint" id="ch1">写真を追加すると表示されます</span>
+      </div>
+      <!-- 調整スライダー -->
+      <div class="bx"><div class="bh"><span class="bt">明度・色調整</span></div><div class="bb" id="adj1box"></div></div>
+      <!-- ドラッグ選択ボタン -->
       <div class="brow">
-        <button class="btn btn-o" id="bcrop1" disabled onclick="confirmCrop(1)">選択領域を確定②</button>
+        <button class="btn btn-o" id="bcrop1" disabled onclick="confirmCrop(1)">比較領域を確定</button>
         <button class="btn btn-o" id="bclr1"  disabled onclick="clearCrop(1)">解除</button>
       </div>
-      <div class="hidden" id="cprev1"><div class="ml">確定した選択領域②</div><div class="cw"><canvas id="cpv1"></canvas></div></div>
+      <!-- 切り取りサムネイル -->
+      <div class="hidden" id="cprev1">
+        <div class="ml">切り取り領域プレビュー</div>
+        <div class="crop-thumb"><canvas id="cpv1"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ── 右: 手元写真 ── -->
+    <div class="photo-col">
+      <div class="sh"><div class="sn">② 手元</div><div><div class="st">手元シェードガイド写真</div><div class="ss">同種ガイドを手元で撮影した写真</div></div></div>
+      <div class="uz" id="uz2" style="flex-shrink:0">
+        <input type="file" id="f2" accept="image/*">
+        <svg id="uico2" width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="1" y="1" width="26" height="26" rx="5" stroke="rgba(240,235,227,0.2)" stroke-width="1.3"/><path d="M14 7v14M7 14l7-7 7 7" stroke="rgba(240,235,227,0.25)" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <div class="uh" id="uhi2">写真を追加<br><small style="font-size:9px;opacity:.55">JPG / PNG / WEBP</small></div>
+      </div>
+      <!-- プレビュー（統一サイズ） -->
+      <div class="photo-preview" id="pp2">
+        <canvas id="cv2"></canvas>
+        <span class="photo-preview-hint" id="ch2">写真を追加すると表示されます</span>
+      </div>
+      <!-- ドラッグ選択ボタン -->
+      <div class="brow">
+        <button class="btn btn-o" id="bcrop2" disabled onclick="confirmCrop(2)">比較領域を確定</button>
+        <button class="btn btn-o" id="bclr2"  disabled onclick="clearCrop(2)">解除</button>
+      </div>
+      <!-- 切り取りサムネイル -->
+      <div class="hidden" id="cprev2">
+        <div class="ml">切り取り領域プレビュー</div>
+        <div class="crop-thumb"><canvas id="cpv2"></canvas></div>
+      </div>
+      <button class="btn btn-o btn-w" id="btnNewPhoto2" onclick="loadNewTechPhoto()" style="margin-top:2px">📷 別の手元写真に切り替える</button>
     </div>
   </div>
-  <div class="pfoot"><span class="pfi">①写真を調整し、領域②を選択したら次へ</span><button class="btn btn-g" onclick="goPage(2)">次へ →</button></div>
+  <div class="pfoot"><span class="pfi">両方の写真を追加し、比較領域を選択したら次へ</span><button class="btn btn-g" onclick="goPage(2)">次へ →</button></div>
 </div>
 
 <!-- ═══ PAGE 2 ═══ -->
-<div class="page" id="page2">
-  <div class="cols3">
-    <div class="col">
-      <div class="sh"><div class="sn">STEP 03</div><div><div class="st">手元シェードガイド写真</div><div class="ss">同種ガイドを手元で撮影した写真</div></div></div>
-      <div class="uz" id="uz2">
-        <input type="file" id="f2" accept="image/*">
-        <svg id="uico2" width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="1" y="1" width="26" height="26" rx="5" stroke="rgba(240,235,227,0.2)" stroke-width="1.3"/><path d="M14 7v14M7 14l7-7 7 7" stroke="rgba(240,235,227,0.25)" stroke-width="1.3" stroke-linecap="round"/></svg>
-        <div class="uh" id="uhi2">手元写真をアップロード<br><small style="font-size:9px;opacity:.55">JPG / PNG / WEBP</small></div>
-      </div>
-      <div class="cw" id="cw2"><canvas id="cv2"></canvas></div>
-      <div class="chint" id="ch2">← 写真をアップロードすると表示されます</div>
-      <div class="brow">
-        <button class="btn btn-o" id="bcrop2" disabled onclick="confirmCrop(2)">選択領域を確定③</button>
-        <button class="btn btn-o" id="bclr2"  disabled onclick="clearCrop(2)">解除</button>
-      </div>
-      <div class="hidden" id="cprev2"><div class="ml">確定した選択領域③</div><div class="cw"><canvas id="cpv2"></canvas></div></div>
-      <button class="btn btn-o btn-w" id="btnNewPhoto2" onclick="loadNewTechPhoto()" style="margin-top:2px">📷 別の手元写真に切り替える</button>
+<div class="page" id="page2" style="flex-direction:column">
+  <!-- L*a*b* ホバーツールチップ -->
+  <div id="p2labTooltip">
+    <div id="p2labSwatch"></div>
+    <div id="p2labHex" style="color:var(--fg)"></div>
+    <div id="p2labL"  style="color:var(--fgm)"></div>
+    <div id="p2labA"  style="color:var(--fgm)"></div>
+    <div id="p2labB"  style="color:var(--fgm)"></div>
+  </div>
+  <canvas id="p2cpv1" style="display:none"></canvas>
+  <canvas id="p2cpv2" style="display:none"></canvas>
+
+  <!-- ── 比較エリア（上） ── -->
+  <!-- ラベル行 -->
+  <div style="display:flex;flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--bdr)">
+    <div id="cmpLabelL" style="text-align:center;padding:4px;font-family:monospace;font-size:10px;color:var(--fgd);border-right:1px solid var(--bdr)">クリニック</div>
+    <div id="cmpLabelR" style="text-align:center;padding:4px;font-family:monospace;font-size:10px;color:var(--fgd)">手元（補正後）</div>
+  </div>
+  <!-- 画像エリア: 2枚を同じ高さで横に並べる -->
+  <div id="cmpArea" style="flex:1;overflow:hidden;min-height:0;background:#080706;display:flex;align-items:center;justify-content:center">
+    <canvas id="cmpL" style="display:block;cursor:crosshair;flex-shrink:0"></canvas>
+    <canvas id="cmpR" style="display:block;cursor:crosshair;flex-shrink:0;border-left:1px solid rgba(255,255,255,0.1)"></canvas>
+  </div>
+
+  <!-- ── コントロール（下） ── -->
+  <div style="flex-shrink:0;display:flex;flex-direction:column;background:var(--bg);border-top:1px solid var(--bdr);max-height:45vh;overflow-y:auto">
+    <!-- ΔE・ボタン行 -->
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid var(--bdr);flex-shrink:0">
+      <span style="font-size:10px;color:var(--fgm)">選択領域間 ΔE</span>
+      <span class="dv" id="deltaDE">—</span>
+      <button class="btn btn-o" id="btnGray" onclick="toggleGrayscale()" style="margin-left:auto">グレースケール</button>
+      <button class="btn btn-o" id="btnNewPhoto2b" onclick="loadNewTechPhoto()">📷 手元写真を切り替え</button>
     </div>
-    <div class="col">
-      <div class="sh"><div class="sn">比較</div><div><div class="st">②③ 横並び比較</div><div class="ss">境界線なしで密着比較</div></div></div>
-      <div class="cstrip">
-        <div class="cc"><div class="clb">②クリニック</div><canvas id="cmpL"></canvas></div>
-        <div class="cc"><div class="clb">③手元（補正後）</div><canvas id="cmpR"></canvas></div>
+    <!-- スライダー横並び -->
+    <div style="display:flex;gap:0;min-height:0">
+      <div style="flex:1;padding:10px 12px;border-right:1px solid var(--bdr)">
+        <div class="bx"><div class="bh"><span class="bt">色補正 — 手元写真に適用</span></div><div class="bb" id="corrbox"></div></div>
       </div>
-      <div class="db"><span class="dl">選択領域間 ΔE</span><span class="dv" id="deltaDE">—</span></div>
-      <div class="bx"><div class="bh"><span class="bt">色補正 — 手元写真に適用</span></div><div class="bb" id="corrbox"></div></div>
-    </div>
-    <div class="col">
-      <div class="sh"><div class="sn">結果</div><div><div class="st">補正後プレビュー</div></div></div>
-      <div class="cstrip">
-        <div class="cc"><div class="clb">補正前</div><canvas id="prevBefore"></canvas></div>
-        <div class="cc"><div class="clb">補正後</div><canvas id="prevAfter"></canvas></div>
+      <div style="flex:1;padding:10px 12px">
+        <div class="lab-box"><div class="bh"><span class="bt">L*a*b* 微調整</span><span class="lab-badge">実験的</span></div><div class="bb" id="labbox"></div></div>
       </div>
-      <div class="db"><span class="dl">補正 ΔE</span><span class="dv" id="deltaCorr">—</span></div>
-      <div class="ml">補正後フル画像</div>
-      <div class="cw" id="cwCorr"><canvas id="cvCorr"></canvas></div>
-      <button class="btn btn-o btn-w" id="btnDlCorr" disabled onclick="dlCanvas('cvCorr','corrected')">補正画像をダウンロード</button>
     </div>
   </div>
-  <div class="pfoot"><button class="btn btn-o" onclick="goPage(1)">← 戻る</button><span class="pfi">別の手元写真で何度でも繰り返せます</span><button class="btn btn-g" onclick="goPage(3)">次へ →</button></div>
+
+  <div class="pfoot"><button class="btn btn-o" onclick="goPage(1)">← 戻る</button><span class="pfi">カーソルを画像に合わせるとL*a*b*が表示されます</span><button class="btn btn-g" onclick="goPage(3)">次へ →</button></div>
 </div>
 
 <!-- ═══ PAGE 3 ═══ -->
 <div class="page" id="page3">
-  <div class="cols2">
-    <div class="col">
+
+  <!-- ── サブモード切替バー ── -->
+  <div id="p3bar" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--surf);border-bottom:1px solid var(--bdr);flex-shrink:0;">
+    <button class="btn btn-o" id="p3tabCut"  onclick="p3Switch('cut')" style="border-color:var(--ac);color:var(--ac)">✂️ 切り取り</button>
+    <button class="btn btn-o" id="p3tabPaste" onclick="p3Switch('paste')">🖼 貼り付け・確認</button>
+    <span style="font-size:10px;color:var(--fgd);font-family:monospace;margin-left:8px" id="p3hint">まず切り取り領域を選択してください</span>
+    <!-- 貼り付けモードのコントロール（右寄せ） -->
+    <div id="p3pasteCtrl" style="display:none;margin-left:auto;display:none;align-items:center;gap:6px;flex-wrap:wrap">
+      <button class="btn btn-o" id="btnAdd" disabled onclick="addPaste()">📌 貼り付ける</button>
+      <button class="btn btn-o" id="btnDel" disabled onclick="delSelected()">🗑 削除</button>
+      <button class="btn btn-o" onclick="undoPaste()">↩ 戻す</button>
+      <button class="btn btn-o" onclick="resetPaste()">リセット</button>
+      <span class="sl" style="font-size:10px;color:var(--fgm)">不透明度</span>
+      <input type="range" id="pOp" min="0" max="100" value="100" style="width:80px;accent-color:var(--ac)">
+      <span class="sv" id="vpOp" style="font-family:monospace;font-size:10px;color:var(--fgm);width:32px">100%</span>
+      <button class="btn btn-g" id="btnDlFinal" disabled onclick="dlCanvas('cvPaste','final')">💾 ダウンロード</button>
+      <button class="btn btn-o" onclick="p3Switch('pick')" style="margin-left:4px">🎨 カラーピッカー</button>
+    </div>
+    <!-- カラーピッカーモードのコントロール -->
+    <div id="p3pickCtrl" style="display:none;margin-left:auto;align-items:center;gap:6px">
+      <button class="btn btn-o" onclick="resetPicker3()">🔄 リセット</button>
+      <button class="btn btn-o" id="btnDlPick3" disabled onclick="dlPickResults3()">結果DL</button>
+      <button class="btn btn-o" onclick="p3Switch('paste')" style="margin-left:4px">← 貼り付けに戻る</button>
+    </div>
+  </div>
+
+  <!-- ── 切り取りビュー ── -->
+  <div id="p3viewCut" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+    <div style="flex:1;overflow:auto;padding:10px;display:flex;flex-direction:column;gap:8px">
       <div class="sh"><div class="sn">STEP 05</div><div><div class="st">補正後画像から切り取る⑤</div><div class="ss">ドラッグして領域を選択</div></div></div>
       <div class="cw" id="cwCut"><canvas id="cvCut"></canvas></div>
       <div class="chint" id="chCut">← ページ②で補正を完了させると表示されます</div>
@@ -396,23 +503,32 @@ function checkPassword(){
       </div>
       <div class="hidden" id="cutPrev"><div class="ml">切り取り領域⑤</div><div class="cw"><canvas id="cvCutPrev"></canvas></div></div>
     </div>
-    <div class="col">
-      <div class="sh"><div class="sn">STEP 06</div><div><div class="st">クリニック写真⑥に貼り付ける</div><div class="ss">枠ドラッグ=移動 / 角=拡縮 / ●=回転</div></div></div>
-      <div class="bx"><div class="bh"><span class="bt">貼り付け操作</span></div><div class="bb" style="gap:6px">
-        <div class="brow">
-          <button class="btn btn-o" id="btnAdd" disabled onclick="addPaste()">📌 貼り付ける</button>
-          <button class="btn btn-o" id="btnDel" disabled onclick="delSelected()">🗑 削除</button>
-          <button class="btn btn-o" onclick="undoPaste()">↩ 戻す</button>
-          <button class="btn btn-o" onclick="resetPaste()">リセット</button>
-        </div>
-        <div class="sr"><span class="sl">不透明度</span><input type="range" id="pOp" min="0" max="100" value="100"><span class="sv" id="vpOp">100%</span></div>
-      </div></div>
-      <div id="pasteWrap"><canvas id="cvPaste"></canvas></div>
-      <div class="chint" id="chPaste">← 切り取り後に「貼り付ける」を押してください</div>
-      <button class="btn btn-g btn-w" id="btnDlFinal" disabled onclick="dlCanvas('cvPaste','final')">完成画像をダウンロード</button>
+  </div>
+
+  <!-- ── 貼り付け・全画面ビュー ── -->
+  <div id="p3viewPaste" style="flex:1;display:none;overflow:auto;line-height:0;background:#080706;position:relative">
+    <canvas id="cvPaste" style="display:block;max-width:100%;height:auto;margin:0 auto;cursor:default"></canvas>
+    <div class="chint" id="chPaste" style="line-height:1.5;background:var(--bg);padding:4px">← 切り取り後に「📌 貼り付ける」を押してください</div>
+  </div>
+
+  <!-- ── カラーピッカービュー（貼り付けキャンバス上で使用） ── -->
+  <div id="p3viewPick" style="flex:1;display:none;overflow:hidden;position:relative;background:#080706">
+    <canvas id="cvPaste3pick" style="display:block;max-width:100%;height:auto;margin:0 auto;cursor:crosshair"></canvas>
+    <!-- crosshair -->
+    <div id="p3pickCross" style="position:absolute;inset:0;pointer-events:none">
+      <div id="p3pickCH" style="position:absolute;height:1px;width:100%;background:rgba(91,155,213,0.55)"></div>
+      <div id="p3pickCV" style="position:absolute;width:1px;height:100%;background:rgba(91,155,213,0.55)"></div>
+    </div>
+    <div id="p3pickDot" style="position:absolute;width:16px;height:16px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 1.5px var(--ac);transform:translate(-50%,-50%);pointer-events:none;display:none"></div>
+    <div id="p3pickMag" style="position:absolute;width:80px;height:80px;border-radius:50%;border:2px solid var(--ac);pointer-events:none;display:none;overflow:hidden;background:#000"><canvas id="p3cvMag"></canvas></div>
+    <!-- 結果パネル -->
+    <div id="p3pickPanel" style="position:absolute;bottom:0;left:0;right:0;background:rgba(26,25,22,0.92);border-top:1px solid var(--bdr);padding:8px 12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <span style="font-size:10px;color:var(--fgm);font-family:monospace" id="p3pickStatus">画像をクリックして色を取得（最大6点）</span>
+      <div id="p3pickGrid" style="display:flex;gap:6px;flex-wrap:wrap"></div>
     </div>
   </div>
-  <div class="pfoot"><button class="btn btn-o" onclick="goPage(2)">← 戻る</button><span class="pfi">⑥クリニック写真に補正済み領域を貼り付けて完成</span><button class="btn btn-g" onclick="goPage(4)">④ カラーピッカーへ →</button></div>
+
+  <div class="pfoot"><button class="btn btn-o" onclick="goPage(2)">← 戻る</button><span class="pfi" id="p3footInfo">切り取り→貼り付けの順で操作してください</span><button class="btn btn-g" onclick="goPage(4)">④ カラーピッカーへ →</button></div>
 </div>
 
 <!-- ═══ PAGE 4: カラーピッカー ═══ -->
@@ -458,6 +574,8 @@ var S={
   cache2raw:null, cache2adj:null, /* raw tech, adjusted tech */
   adj1:{L:0,K:0,S:0,T:0,G:0},
   adjC:{L:0,K:0,S:0,T:0,G:0},
+  adjLab:{L:0,a:0,b:0},
+  grayscale:false,
   crop1:null, crop2:null, crop1Data:null, crop2Data:null,
   corrData:null, cutRect:null, cutData:null,
   pasteList:[], selIdx:-1,
@@ -514,6 +632,7 @@ function clamp(v){return Math.max(0,Math.min(255,Math.round(v)));}
 
 function goPage(n){
   [1,2,3,4,5].forEach(function(i){$('page'+i).classList.toggle('on',i===n);$('tab'+i).classList.toggle('active',i===n);});
+  if(n===2) setTimeout(function(){ updateCompare(); },30);
   if(n===3) syncPage3();
   if(n===4) syncPickerPage();
 }
@@ -546,11 +665,13 @@ function rebuildCache1(){
   var raw=imgToData(S.img1);
   S.cache1=adjustData(raw,S.adj1);
 }
+/* canvas → CSS max-height:260px で表示制御 */
 /* rebuild cache2 when img2 or adjC changes */
 function rebuildCache2(){
   if(!S.img2) return;
   S.cache2raw=imgToData(S.img2);
-  S.cache2adj=adjustData(S.cache2raw,S.adjC);
+  var adj=adjustData(S.cache2raw,S.adjC);
+  S.cache2adj=applyLabAdj(adj);
   S.corrData=S.cache2adj;
 }
 
@@ -558,14 +679,17 @@ function rebuildCache2(){
 function drawC1(){
   var cv=$('cv1'); if(!S.cache1) return;
   cv.width=S.cache1.width; cv.height=S.cache1.height;
-  cv.getContext('2d').putImageData(S.cache1,0,0);
+  var data=S.grayscale?toGrayscaleData(S.cache1):S.cache1;
+  cv.getContext('2d').putImageData(data,0,0);
   drawSel(cv,S.drag.who==='c1'?S.drag:null, S.crop1);
+  var h1=$('ch1');if(h1)h1.style.display='none';
 }
 function drawC2(){
   var cv=$('cv2'); if(!S.img2) return;
   cv.width=S.img2.naturalWidth; cv.height=S.img2.naturalHeight;
   cv.getContext('2d').drawImage(S.img2,0,0);
   drawSel(cv,S.drag.who==='c2'?S.drag:null, S.crop2);
+  var h2=$('ch2');if(h2)h2.style.display='none';
 }
 function drawCut(){
   var cv=$('cvCut'); if(!S.corrData) return;
@@ -663,7 +787,7 @@ $('f1').addEventListener('change',function(e){
   var img=new Image();
   img.onload=function(){
     S.img1=img;$('uico1').style.display='none';$('uhi1').style.display='none';
-    $('uz1').classList.add('has');$('ch1').textContent='ドラッグして比較領域②を選択してください';
+    $('uz1').classList.add('has');$('ch1').textContent='ドラッグして比較領域を選択してください';
     S.crop1=null;S.crop1Data=null;hide('cprev1');$('bcrop1').disabled=true;$('bclr1').disabled=true;
     rebuildCache1();drawC1();setupDrag('cv1','c1');
   };
@@ -673,14 +797,21 @@ $('f1').addEventListener('change',function(e){
 function confirmCrop(n){
   if(n===1){
     if(!S.crop1||!S.cache1)return;
-    var cv=$('cv1');
-    S.crop1Data=cv.getContext('2d').getImageData(S.crop1.x,S.crop1.y,Math.max(1,S.crop1.w),Math.max(1,S.crop1.h));
+    /* cv1には選択線が描かれているのでcache1から直接切り出す */
+    var wc1=$('wc');
+    wc1.width=S.cache1.width; wc1.height=S.cache1.height;
+    wc1.getContext('2d').putImageData(S.cache1,0,0);
+    S.crop1Data=wc1.getContext('2d').getImageData(S.crop1.x,S.crop1.y,Math.max(1,S.crop1.w),Math.max(1,S.crop1.h));
     var pc=$('cpv1');pc.width=S.crop1.w;pc.height=S.crop1.h;pc.getContext('2d').putImageData(S.crop1Data,0,0);
+    var p2c1=$('p2cpv1');if(p2c1){p2c1.width=S.crop1.w;p2c1.height=S.crop1.h;p2c1.getContext('2d').putImageData(S.crop1Data,0,0);}
     show('cprev1');updateCompare();
   }else{
     if(!S.crop2||!S.img2)return;
-    var cv2=$('cv2');
-    S.crop2Data=cv2.getContext('2d').getImageData(S.crop2.x,S.crop2.y,Math.max(1,S.crop2.w),Math.max(1,S.crop2.h));
+    /* cv2には選択線が描かれているのでcache2rawから直接切り出す */
+    var wc2=$('wc');
+    wc2.width=S.cache2raw.width; wc2.height=S.cache2raw.height;
+    wc2.getContext('2d').putImageData(S.cache2raw,0,0);
+    S.crop2Data=wc2.getContext('2d').getImageData(S.crop2.x,S.crop2.y,Math.max(1,S.crop2.w),Math.max(1,S.crop2.h));
     var pc2=$('cpv2');pc2.width=S.crop2.w;pc2.height=S.crop2.h;pc2.getContext('2d').putImageData(S.crop2Data,0,0);
     show('cprev2');updateCompare();applyCorr();
   }
@@ -698,35 +829,95 @@ $('f2').addEventListener('change',function(e){
   var img=new Image();
   img.onload=function(){
     S.img2=img;$('uico2').style.display='none';$('uhi2').style.display='none';
-    $('uz2').classList.add('has');$('ch2').textContent='ドラッグして比較領域③を選択してください';
+    $('uz2').classList.add('has');$('ch2').textContent='ドラッグして比較領域を選択してください';
     S.crop2=null;S.crop2Data=null;hide('cprev2');$('bcrop2').disabled=true;$('bclr2').disabled=true;
     rebuildCache2();drawC2();setupDrag('cv2','c2');applyCorr();
   };
   img.src=URL.createObjectURL(file);
 });
 
-var STRIP_H=90;
+var STRIP_H=130;
 function applyCorr(){
   if(!S.img2)return;
-  S.corrData=S.cache2adj||S.cache2raw;
-  if(!S.corrData)return;
-  var cc=$('cvCorr');cc.width=S.corrData.width;cc.height=S.corrData.height;cc.getContext('2d').putImageData(S.corrData,0,0);
-  $('btnDlCorr').disabled=false;
-  drawStrip($('prevBefore'),S.cache2raw);drawStrip($('prevAfter'),S.corrData);
-  if(S.cache2raw){var de=deltaE(S.cache2raw,S.corrData);var dv=$('deltaCorr');dv.textContent=de.toFixed(1);dv.className='dv '+deClass(de);}
+  var base=S.cache2adj||S.cache2raw;
+  if(!base)return;
+  S.corrData=S.grayscale?toGrayscaleData(base):base;
   updateCorrCompare(S.corrData);
 }
 
 function drawStrip(canvas,data){
-  if(!data){canvas.width=200;canvas.height=STRIP_H;return;}
-  var sc=STRIP_H/data.height;
-  canvas.width=Math.max(1,Math.round(data.width*sc));canvas.height=STRIP_H;
-  var wc=$('wc');wc.width=data.width;wc.height=data.height;wc.getContext('2d').putImageData(data,0,0);
-  canvas.getContext('2d').drawImage(wc,0,0,canvas.width,canvas.height);
+  if(!data){canvas.width=10;canvas.height=10;return;}
+  canvas.width=data.width; canvas.height=data.height;
+  var wc=$('wc');wc.width=data.width;wc.height=data.height;
+  wc.getContext('2d').putImageData(data,0,0);
+  var ctx=canvas.getContext('2d');
+  ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+  ctx.drawImage(wc,0,0);
+}
+
+/* 2枚を同じ高さに揃えて中央にくっつけて描画 */
+function drawSyncPair(dataL, dataR){
+  var cvL=$('cmpL'), cvR=$('cmpR');
+  var area=$('cmpArea');
+  if(!area) return;
+
+  /* エリアサイズを確実に取得（非表示時は window高さから推定） */
+  var areaH = area.clientHeight > 50 ? area.clientHeight : Math.round(window.innerHeight * 0.52);
+  var areaW = area.clientWidth  > 50 ? area.clientWidth  : Math.round(window.innerWidth);
+
+  /* 両データがある場合: 合計幅がエリア幅に収まるようスケール */
+  var scL, scR, hL, hR, wL, wR;
+  if(dataL && dataR){
+    /* まず高さ基準でスケール */
+    scL = areaH / dataL.height;
+    scR = areaH / dataR.height;
+    wL  = Math.round(dataL.width * scL);
+    wR  = Math.round(dataR.width * scR);
+    /* 合計幅がエリア幅を超えたら縮小 */
+    if(wL + wR > areaW){
+      var sc2 = areaW / (wL + wR);
+      scL *= sc2; scR *= sc2;
+      wL = Math.round(dataL.width * scL);
+      wR = Math.round(dataR.width * scR);
+    }
+    hL = Math.round(dataL.height * scL);
+    hR = Math.round(dataR.height * scR);
+  } else if(dataL){
+    scL = Math.min(areaH / dataL.height, (areaW*0.9) / dataL.width);
+    wL = Math.round(dataL.width * scL); hL = Math.round(dataL.height * scL);
+    wR = 10; hR = hL;
+  } else if(dataR){
+    scR = Math.min(areaH / dataR.height, (areaW*0.9) / dataR.width);
+    wR = Math.round(dataR.width * scR); hR = Math.round(dataR.height * scR);
+    wL = 10; hL = hR;
+  } else { return; }
+
+  function renderOne(cv, data, w, h){
+    if(!data || w<=1){ cv.width=1; cv.height=1; cv.style.cssText='display:none'; return; }
+    cv.style.display='block';
+    cv.width=w; cv.height=h;
+    cv.style.width=w+'px'; cv.style.height=h+'px';
+    var wc=$('wc'); wc.width=data.width; wc.height=data.height;
+    wc.getContext('2d').putImageData(data,0,0);
+    var ctx=cv.getContext('2d');
+    ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+    ctx.drawImage(wc,0,0,w,h);
+  }
+
+  renderOne(cvL, dataL, wL||1, hL||1);
+  renderOne(cvR, dataR, wR||1, hR||1);
+
+  /* ラベル幅をcanvasに合わせる */
+  var lL=$('cmpLabelL'), lR=$('cmpLabelR');
+  if(lL) lL.style.width = (wL||0)+'px';
+  if(lR) lR.style.width = (wR||0)+'px';
 }
 
 function updateCompare(){
-  drawStrip($('cmpL'),S.crop1Data);drawStrip($('cmpR'),S.crop2Data);recalcDE();
+  var c1=(S.grayscale&&S.crop1Data)?toGrayscaleData(S.crop1Data):S.crop1Data;
+  var c2=(S.grayscale&&S.crop2Data)?toGrayscaleData(S.crop2Data):S.crop2Data;
+  drawSyncPair(c1, c2);
+  recalcDE();
 }
 function updateCorrCompare(corrFull){
   if(!S.crop2||!corrFull)return;
@@ -735,7 +926,9 @@ function updateCorrCompare(corrFull){
   var cw=Math.min(c.w,corrFull.width-cx),ch=Math.min(c.h,corrFull.height-cy);
   if(cw<1||ch<1)return;
   var cc=wc.getContext('2d').getImageData(cx,cy,cw,ch);
-  drawStrip($('cmpR'),cc);
+  var c1disp=(S.grayscale&&S.crop1Data)?toGrayscaleData(S.crop1Data):S.crop1Data;
+  var c2disp=S.grayscale?toGrayscaleData(cc):cc;
+  drawSyncPair(c1disp, c2disp);
   if(S.crop1Data){var de=deltaE(S.crop1Data,cc);var dv=$('deltaDE');dv.textContent=de.toFixed(1);dv.className='dv '+deClass(de);}
 }
 function recalcDE(){
@@ -743,8 +936,154 @@ function recalcDE(){
   var de=deltaE(S.crop1Data,S.crop2Data);var dv=$('deltaDE');dv.textContent=de.toFixed(1);dv.className='dv '+deClass(de);
 }
 
+/* ═══ PAGE 3: サブモード切替 ═══ */
+var _p3mode = 'cut';
+var PICKS3 = [];
+var _pick3Ready = false;
+
+function p3Switch(mode){
+  _p3mode = mode;
+  var viewCut   = document.getElementById('p3viewCut');
+  var viewPaste = document.getElementById('p3viewPaste');
+  var viewPick  = document.getElementById('p3viewPick');
+  var ctrlPaste = document.getElementById('p3pasteCtrl');
+  var ctrlPick  = document.getElementById('p3pickCtrl');
+
+  viewCut.style.display   = mode==='cut'   ? 'flex' : 'none';
+  viewPaste.style.display = mode==='paste' ? 'block' : 'none';
+  viewPick.style.display  = mode==='pick'  ? 'flex' : 'none';
+  viewPick.style.flexDirection = 'column';
+
+  ctrlPaste.style.display = mode==='paste' ? 'flex' : 'none';
+  ctrlPick.style.display  = mode==='pick'  ? 'flex' : 'none';
+
+  /* タブボタンのハイライト */
+  ['cut','paste'].forEach(function(m){
+    var btn = document.getElementById('p3tab' + m.charAt(0).toUpperCase() + m.slice(1));
+    if(btn){
+      btn.style.borderColor = (m===mode) ? 'var(--ac)' : '';
+      btn.style.color = (m===mode) ? 'var(--ac)' : '';
+    }
+  });
+
+  if(mode==='paste'){
+    /* 貼り付けキャンバスを再描画 */
+    drawPaste();
+  }
+  if(mode==='pick'){
+    /* 貼り付けキャンバスの内容をpick用キャンバスにコピー */
+    var src = document.getElementById('cvPaste');
+    var dst = document.getElementById('cvPaste3pick');
+    dst.width  = src.width;
+    dst.height = src.height;
+    dst.getContext('2d').drawImage(src, 0, 0);
+    if(!_pick3Ready){ _pick3Ready=true; setupPick3Events(); }
+    renderPick3Grid();
+  }
+}
+
+/* ── インライン カラーピッカー3 ── */
+function setupPick3Events(){
+  var cv  = document.getElementById('cvPaste3pick');
+  var dot = document.getElementById('p3pickDot');
+  var ch  = document.getElementById('p3pickCH');
+  var cv2 = document.getElementById('p3pickCV');
+  var mag = document.getElementById('p3pickMag');
+  var wrap= document.getElementById('p3viewPick');
+
+  function toPx(e){
+    var r  = cv.getBoundingClientRect();
+    var wr = wrap.getBoundingClientRect();
+    var ex = e.clientX - r.left;
+    var ey = e.clientY - r.top;
+    var px = Math.round(ex * cv.width  / r.width);
+    var py = Math.round(ey * cv.height / r.height);
+    px = Math.max(0, Math.min(cv.width -1, px));
+    py = Math.max(0, Math.min(cv.height-1, py));
+    return { ex:e.clientX-wr.left, ey:e.clientY-wr.top, px:px, py:py, rw:r.width, rh:r.height };
+  }
+
+  cv.addEventListener('mousemove', function(e){
+    var p = toPx(e);
+    ch.style.top=''+p.ey+'px'; ch.style.display='block';
+    cv2.style.left=''+p.ex+'px'; cv2.style.display='block';
+    dot.style.display='block'; dot.style.left=p.ex+'px'; dot.style.top=p.ey+'px';
+    var mx=p.ex+22, my=p.ey+22;
+    if(mx+80>p.rw) mx=p.ex-102;
+    if(my+80>p.rh) my=p.ey-102;
+    mag.style.left=mx+'px'; mag.style.top=my+'px'; mag.style.display='block';
+    var mc=document.getElementById('p3cvMag'); mc.width=80; mc.height=80;
+    var mctx=mc.getContext('2d'); mctx.imageSmoothingEnabled=false;
+    var sx=Math.max(0,p.px-5), sy=Math.max(0,p.py-5);
+    var sw=Math.min(10,cv.width-sx), sh=Math.min(10,cv.height-sy);
+    mctx.drawImage(cv,sx,sy,sw,sh,0,0,80,80);
+    mctx.strokeStyle='rgba(91,155,213,0.9)'; mctx.lineWidth=1;
+    mctx.beginPath(); mctx.moveTo(40,0); mctx.lineTo(40,80); mctx.stroke();
+    mctx.beginPath(); mctx.moveTo(0,40); mctx.lineTo(80,40); mctx.stroke();
+  });
+  cv.addEventListener('mouseleave', function(){
+    dot.style.display='none'; ch.style.display='none'; cv2.style.display='none'; mag.style.display='none';
+  });
+  cv.addEventListener('click', function(e){
+    if(PICKS3.length>=6) return;
+    var p = toPx(e);
+    var id = cv.getContext('2d').getImageData(p.px, p.py, 1, 1).data;
+    var rr=id[0], gg=id[1], bb=id[2];
+    var lab=rgbToLab(rr,gg,bb);
+    PICKS3.push({ r:rr,g:gg,b:bb,L:lab.L,a:lab.a,b:lab.b,
+                  hex:toHex(rr,gg,bb),px:p.px,py:p.py });
+    renderPick3Grid();
+    document.getElementById('btnDlPick3').disabled=false;
+  });
+}
+
+function renderPick3Grid(){
+  var grid=document.getElementById('p3pickGrid'); grid.innerHTML='';
+  var st=document.getElementById('p3pickStatus');
+  PICKS3.forEach(function(p,i){
+    var cell=document.createElement('div');
+    cell.style.cssText='display:flex;align-items:center;gap:4px;background:var(--surf);border:1px solid var(--bdr);border-radius:5px;padding:4px 7px';
+    cell.innerHTML='<div style="width:20px;height:20px;border-radius:3px;background:'+p.hex+';border:1px solid rgba(255,255,255,0.15);flex-shrink:0"></div>'+
+      '<div style="display:flex;flex-direction:column;gap:1px">'+
+        '<span style="font-family:monospace;font-size:10px;color:var(--fg)">'+p.hex.toUpperCase()+'</span>'+
+        '<span style="font-family:monospace;font-size:9px;color:var(--fgm)">L*'+p.L.toFixed(1)+' a*'+p.a.toFixed(1)+' b*'+p.b.toFixed(1)+'</span>'+
+      '</div>';
+    grid.appendChild(cell);
+  });
+  if(PICKS3.length===0) st.textContent='画像をクリックして色を取得（最大6点）';
+  else if(PICKS3.length<6) st.textContent=PICKS3.length+'点取得済み — あと'+(6-PICKS3.length)+'点';
+  else st.textContent='6点取得完了 ✓';
+}
+
+function resetPicker3(){
+  PICKS3=[]; renderPick3Grid();
+  document.getElementById('btnDlPick3').disabled=true;
+}
+
+function dlPickResults3(){
+  var wc=$('wc');
+  var cols=2,rows=3,cw=200,rh=50,pad=10;
+  wc.width=cols*cw+pad*(cols+1); wc.height=rows*rh+pad*(rows+1)+40;
+  var ctx=wc.getContext('2d');
+  ctx.fillStyle='#1A1916'; ctx.fillRect(0,0,wc.width,wc.height);
+  ctx.fillStyle='#F0EBE3'; ctx.font='bold 13px monospace'; ctx.fillText('DentalShade — Color Pick Results',pad,22);
+  for(var i=0;i<6;i++){
+    var col=i<3?0:1, row=i<3?i:i-3;
+    var x=pad+col*(cw+pad), y=40+pad+row*(rh+pad);
+    var p=PICKS3[i];
+    ctx.fillStyle=p?p.hex:'#2a2825'; ctx.fillRect(x,y,rh-4,rh-4);
+    ctx.strokeStyle='rgba(255,255,255,0.15)'; ctx.strokeRect(x,y,rh-4,rh-4);
+    ctx.fillStyle='#F0EBE3'; ctx.font='11px monospace';
+    ctx.fillText(''+(i+1)+'. '+(p?p.hex.toUpperCase():'—'),x+rh,y+16);
+    ctx.fillStyle='rgba(240,235,227,0.55)'; ctx.font='10px monospace';
+    ctx.fillText(p?('L*'+p.L.toFixed(1)+' a*'+p.a.toFixed(1)+' b*'+p.b.toFixed(1)):'',x+rh,y+32);
+  }
+  dlCanvas('wc','color_picks_paste');
+}
+
 /* ═══ PAGE 3: CUT ═══ */
 function syncPage3(){
+  p3Switch('cut');
   if(!S.corrData){$('chCut').textContent='← ページ②で補正を完了させると表示されます';return;}
   var cvCut=$('cvCut');cvCut.width=S.corrData.width;cvCut.height=S.corrData.height;
   drawCut();setupDrag('cvCut','cut');
@@ -758,6 +1097,7 @@ function confirmCut(){
   S.cutData=wc.getContext('2d').getImageData(c.x,c.y,Math.max(1,c.w),Math.max(1,c.h));
   var pc=$('cvCutPrev');pc.width=c.w;pc.height=c.h;pc.getContext('2d').putImageData(S.cutData,0,0);show('cutPrev');
   $('btnAdd').disabled=false;$('chPaste').textContent='「貼り付ける」を押すと中央に配置されます';
+  p3Switch('paste');
 }
 function clearCut(){S.cutRect=null;$('bCutOk').disabled=true;$('bCutClr').disabled=true;drawCut();}
 
@@ -1041,7 +1381,7 @@ function syncPickerPage(){
   /* collect sources */
   _pickSrcs=[];
   if($('cvPaste').width>1)_pickSrcs.push({label:'完成画像',id:'cvPaste'});
-  if($('cvCorr').width>1)_pickSrcs.push({label:'補正後手元',id:'cvCorr'});
+
   if(S.cache1)_pickSrcs.push({label:'クリニック写真',id:'cv1'});
   if(!_pickSrcs.length){$('pickHintBar').textContent='先にページ①〜③で画像を読み込んでください';return;}
 
@@ -1197,12 +1537,155 @@ function dlPickResults(){
   dlCanvas('wc','color_picks');
 }
 
+
+/* ── グレースケール ── */
+function toggleGrayscale(){
+  S.grayscale = !S.grayscale;
+  var btn=$('btnGray');
+  if(btn) btn.textContent = S.grayscale ? 'カラー' : 'グレースケール';
+  rebuildCache1(); drawC1(); applyCorr(); updateCompare();
+}
+function toGrayscaleData(data){
+  var d=new Uint8ClampedArray(data.data);
+  for(var i=0;i<d.length;i+=4){
+    var g=Math.round(d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114);
+    d[i]=g;d[i+1]=g;d[i+2]=g;
+  }
+  return new ImageData(d,data.width,data.height);
+}
+
+/* ── Lab微調整 ── */
+var LAB_SLD=[
+  {k:'L',lbl:'L* 明度', min:-30,max:30},
+  {k:'a',lbl:'a* 赤↔緑',min:-20,max:20},
+  {k:'b',lbl:'b* 黄↔青',min:-20,max:20}
+];
+function buildLabSliders(){
+  var box=$('labbox'); if(!box) return; box.innerHTML='';
+  LAB_SLD.forEach(function(s){
+    var row=document.createElement('div'); row.className='sr';
+    row.innerHTML='<span class="sl">'+s.lbl+'</span>'+
+      '<button class="pm" data-lk="'+s.k+'" data-d="-1">−</button>'+
+      '<input type="range" id="lab'+s.k+'" min="'+s.min+'" max="'+s.max+'" value="0">'+
+      '<button class="pm" data-lk="'+s.k+'" data-d="1">＋</button>'+
+      '<span class="sv" id="vlab'+s.k+'">0</span>';
+    box.appendChild(row);
+  });
+  LAB_SLD.forEach(function(s){
+    $('lab'+s.k).addEventListener('input',function(){
+      var v=+this.value; S.adjLab[s.k]=v;
+      $('vlab'+s.k).textContent=(v>0?'+':'')+v;
+      rebuildCache2(); applyCorr();
+    });
+  });
+  box.querySelectorAll('.pm').forEach(function(btn){
+    var t=null;
+    function step(){
+      var k=btn.dataset.lk,d=+btn.dataset.d;
+      var sl=LAB_SLD.find(function(x){return x.k===k;});
+      var nv=Math.max(sl.min,Math.min(sl.max,S.adjLab[k]+d));
+      S.adjLab[k]=nv;$('lab'+k).value=nv;
+      $('vlab'+k).textContent=(nv>0?'+':'')+nv;
+      rebuildCache2();applyCorr();
+    }
+    function stop(){clearInterval(t);}
+    btn.addEventListener('mousedown',function(e){e.preventDefault();step();t=setInterval(step,70);});
+    btn.addEventListener('mouseup',stop);btn.addEventListener('mouseleave',stop);
+    btn.addEventListener('touchstart',function(e){e.preventDefault();step();t=setInterval(step,70);},{passive:false});
+    btn.addEventListener('touchend',stop);
+  });
+  var rb=document.createElement('button');rb.className='btn btn-o';rb.textContent='リセット';
+  rb.onclick=function(){
+    LAB_SLD.forEach(function(s){S.adjLab[s.k]=0;$('lab'+s.k).value=0;$('vlab'+s.k).textContent='0';});
+    rebuildCache2();applyCorr();
+  };
+  box.appendChild(rb);
+}
+function applyLabAdj(data){
+  var adj=S.adjLab;
+  if(adj.L===0&&adj.a===0&&adj.b===0) return data;
+  var d=new Uint8ClampedArray(data.data);
+  for(var i=0;i<d.length;i+=4){
+    var r=d[i]/255,g=d[i+1]/255,b=d[i+2]/255;
+    function lin(v){return v>0.04045?Math.pow((v+0.055)/1.055,2.4):v/12.92;}
+    var rl=lin(r),gl=lin(g),bl=lin(b);
+    var X=(rl*0.4124564+gl*0.3575761+bl*0.1804375)/0.95047;
+    var Y=(rl*0.2126729+gl*0.7151522+bl*0.0721750)/1.00000;
+    var Z=(rl*0.0193339+gl*0.1191920+bl*0.9503041)/1.08883;
+    function f(t){return t>0.008856?Math.cbrt(t):(7.787*t+16/116);}
+    var fx=f(X),fy=f(Y),fz=f(Z);
+    var L=116*fy-16+adj.L, a=500*(fx-fy)+adj.a, bv=200*(fy-fz)+adj.b;
+    var fy2=(L+16)/116,fx2=a/500+fy2,fz2=fy2-bv/200;
+    function fi(t){return t>0.20689?t*t*t:(t-16/116)/7.787;}
+    var X2=fi(fx2)*0.95047,Y2=fi(fy2),Z2=fi(fz2)*1.08883;
+    var rl2=X2*3.2404542+Y2*-1.5371385+Z2*-0.4985314;
+    var gl2=X2*-0.9692660+Y2*1.8760108+Z2*0.0415560;
+    var bl2=X2*0.0556434+Y2*-0.2040259+Z2*1.0572252;
+    function gam(v){v=Math.max(0,v);return v>0.0031308?1.055*Math.pow(v,1/2.4)-0.055:12.92*v;}
+    d[i]=Math.max(0,Math.min(255,Math.round(gam(rl2)*255)));
+    d[i+1]=Math.max(0,Math.min(255,Math.round(gam(gl2)*255)));
+    d[i+2]=Math.max(0,Math.min(255,Math.round(gam(bl2)*255)));
+  }
+  return new ImageData(d,data.width,data.height);
+}
+
+/* ── PAGE2 ホバーカラーピッカー ── */
+var _p2HoverReady=false;
+function initP2HoverPicker(){
+  if(_p2HoverReady) return; _p2HoverReady=true;
+  var tip=$('p2labTooltip');
+  var sw=$('p2labSwatch'),hexEl=$('p2labHex');
+  var lEl=$('p2labL'),aEl=$('p2labA'),bEl=$('p2labB');
+
+  function attach(cvId, getDataFn){
+    var cv=$(cvId); if(!cv) return;
+    cv.addEventListener('mousemove',function(e){
+      var data=getDataFn(); if(!data) return;
+      var r=cv.getBoundingClientRect();
+      var ex=e.clientX-r.left, ey=e.clientY-r.top;
+      var px=Math.max(0,Math.min(data.width-1, Math.round(ex*data.width/r.width)));
+      var py=Math.max(0,Math.min(data.height-1,Math.round(ey*data.height/r.height)));
+      var idx=(py*data.width+px)*4;
+      var rr=data.data[idx],gg=data.data[idx+1],bb=data.data[idx+2];
+      var lab=rgbToLab(rr,gg,bb);
+      var hex=toHex(rr,gg,bb);
+      sw.style.background=hex;
+      hexEl.textContent=hex.toUpperCase();
+      lEl.textContent='L* '+lab.L.toFixed(1);
+      aEl.textContent='a* '+(lab.a>=0?'+':'')+lab.a.toFixed(1);
+      bEl.textContent='b* '+(lab.b>=0?'+':'')+lab.b.toFixed(1);
+      var tx=e.clientX+18, ty=e.clientY-20;
+      if(tx+130>window.innerWidth) tx=e.clientX-148;
+      tip.style.left=tx+'px'; tip.style.top=ty+'px';
+      tip.style.display='block';
+    });
+    cv.addEventListener('mouseleave',function(){ tip.style.display='none'; });
+  }
+
+  /* ②クリニック: crop1Dataを直接使用 */
+  attach('cmpL',function(){ return S.crop1Data||null; });
+
+  /* ③手元補正後: corrDataのcrop2部分 */
+  attach('cmpR',function(){
+    if(!S.crop2||!S.corrData) return null;
+    var c=S.crop2;
+    var wc=$('wc'); wc.width=S.corrData.width; wc.height=S.corrData.height;
+    wc.getContext('2d').putImageData(S.corrData,0,0);
+    var cx=Math.min(c.x,S.corrData.width-1),cy=Math.min(c.y,S.corrData.height-1);
+    var cw=Math.min(c.w,S.corrData.width-cx),ch=Math.min(c.h,S.corrData.height-cy);
+    if(cw<1||ch<1) return null;
+    return wc.getContext('2d').getImageData(cx,cy,cw,ch);
+  });
+}
+
 /* ═══ INIT ═══ */
 (function(){
   /* pasteOv removed - handles drawn on canvas */
   /* init compare canvases */
-  [$('cmpL'),$('cmpR'),$('prevBefore'),$('prevAfter')].forEach(function(c){c.width=200;c.height=STRIP_H||90;});
+  [$('cmpL'),$('cmpR')].forEach(function(c){c.width=10;c.height=10;});
   renderPickGrid();
+  buildLabSliders();
+  initP2HoverPicker();
 })();
 
 
@@ -1227,6 +1710,8 @@ function saveCurrentState(){
     img1:S.img1, img2:S.img2,
     cache1:S.cache1, cache2raw:S.cache2raw, cache2adj:S.cache2adj,
     adj1:cloneAdj(S.adj1), adjC:cloneAdj(S.adjC),
+    adjLab:{L:S.adjLab.L,a:S.adjLab.a,b:S.adjLab.b},
+    grayscale:S.grayscale,
     crop1:S.crop1?{x:S.crop1.x,y:S.crop1.y,w:S.crop1.w,h:S.crop1.h}:null,
     crop2:S.crop2?{x:S.crop2.x,y:S.crop2.y,w:S.crop2.w,h:S.crop2.h}:null,
     crop1Data:S.crop1Data, crop2Data:S.crop2Data,
@@ -1245,6 +1730,15 @@ function restoreState(st){
   /* adj オブジェクト自体は差し替えない（スライダーのクロージャが参照しているため）
      プロパティだけ上書きする */
   SLD.forEach(function(s){ S.adj1[s.k]=st.adj1[s.k]||0; S.adjC[s.k]=st.adjC[s.k]||0; });
+  if(st.adjLab){ LAB_SLD.forEach(function(s){ S.adjLab[s.k]=st.adjLab[s.k]||0; }); }
+  else { LAB_SLD.forEach(function(s){ S.adjLab[s.k]=0; }); }
+  S.grayscale=st.grayscale||false;
+  var bg=$('btnGray'); if(bg) bg.textContent=S.grayscale?'カラー':'グレースケール';
+  LAB_SLD.forEach(function(s){
+    var v=S.adjLab[s.k]||0;
+    var el=$('lab'+s.k); if(el){ el.value=v; }
+    var sv=$('vlab'+s.k); if(sv){ sv.textContent=(v>0?'+':'')+v; }
+  });
   S.crop1=st.crop1; S.crop2=st.crop2;
   S.crop1Data=st.crop1Data; S.crop2Data=st.crop2Data;
   S.corrData=st.corrData;
@@ -1295,10 +1789,12 @@ function restoreState(st){
   if(S.crop1Data){
     var pc=$('cpv1'); pc.width=S.crop1.w; pc.height=S.crop1.h;
     pc.getContext('2d').putImageData(S.crop1Data,0,0);
+    var p2c1=$('p2cpv1');if(p2c1){p2c1.width=S.crop1.w;p2c1.height=S.crop1.h;p2c1.getContext('2d').putImageData(S.crop1Data,0,0);}
   }
   if(S.crop2Data){
     var pc2=$('cpv2'); pc2.width=S.crop2.w; pc2.height=S.crop2.h;
     pc2.getContext('2d').putImageData(S.crop2Data,0,0);
+    var p2c2=$('p2cpv2');if(p2c2){p2c2.width=S.crop2.w;p2c2.height=S.crop2.h;p2c2.getContext('2d').putImageData(S.crop2Data,0,0);}
   }
   updateCompare();
   /* cut data preview */
@@ -1488,13 +1984,8 @@ function loadNewTechPhoto(){
   /* file inputをリセット（同じファイルを再選択できるよう） */
   $('f2').value='';
   /* 比較ストリップをクリア */
-  drawStrip($('prevBefore'),null); drawStrip($('prevAfter'),null);
   drawStrip($('cmpL'),S.crop1Data); drawStrip($('cmpR'),null);
   $('deltaDE').textContent='—'; $('deltaDE').className='dv';
-  $('deltaCorr').textContent='—'; $('deltaCorr').className='dv';
-  /* 補正後キャンバスもクリア */
-  var cc=$('cvCorr'); cc.width=10; cc.height=10;
-  $('btnDlCorr').disabled=true;
   /* 削除していた _ds キャッシュをクリアして再setupDragできるようにする */
   delete _ds['cv2'];
   goPage(2);
